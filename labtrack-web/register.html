@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Criar conta — LabTrack</title>
+  <script>document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('labtrack_theme') || 'dark');</script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div class="lt-auth-page">
+    <div class="lt-card lt-auth-card p-4">
+      <h1 class="h5 mb-1">Criar conta</h1>
+      <p class="text-body-secondary small mb-4">
+        Sua conta começa com acesso apenas de consulta. Peça a um administrador para liberar seu papel de Docente.
+      </p>
+
+      <form id="register-form">
+        <div class="mb-3">
+          <label class="form-label small text-body-secondary">Nome</label>
+          <input type="text" id="name" class="form-control" placeholder="Seu nome completo" required autofocus>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-body-secondary">Email</label>
+          <input type="email" id="email" class="form-control" placeholder="voce@instituicao.edu.br" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-body-secondary">Senha</label>
+          <input type="password" id="password" class="form-control" placeholder="mínimo 8 caracteres" minlength="8" required>
+        </div>
+
+        <div id="register-error" class="alert alert-danger py-2 small d-none"></div>
+
+        <button type="submit" id="register-btn" class="btn btn-primary w-100 mb-3">Criar conta</button>
+      </form>
+
+      <p class="small text-center text-body-secondary mb-0">
+        Já tem conta? <a href="login.html">Entrar</a>
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { auth, db } from "./js/firebase-config.js";
+
+    const form = document.getElementById("register-form");
+    const errorBox = document.getElementById("register-error");
+    const registerBtn = document.getElementById("register-btn");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorBox.classList.add("d-none");
+      registerBtn.disabled = true;
+      registerBtn.textContent = "Criando conta...";
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(credential.user, { displayName: name });
+
+        await setDoc(doc(db, "users", credential.user.uid), {
+          name,
+          email,
+          role: "VISITANTE",
+          active: true,
+          createdAt: serverTimestamp(),
+        });
+
+        window.location.href = "index.html";
+      } catch (err) {
+        errorBox.textContent = translateFirebaseError(err.code);
+        errorBox.classList.remove("d-none");
+        registerBtn.disabled = false;
+        registerBtn.textContent = "Criar conta";
+      }
+    });
+
+    function translateFirebaseError(code) {
+      const map = {
+        "auth/email-already-in-use": "Já existe uma conta com este email.",
+        "auth/weak-password": "A senha precisa ter pelo menos 6 caracteres.",
+        "auth/invalid-email": "Email inválido.",
+      };
+      return map[code] || "Não foi possível criar a conta. Tente novamente.";
+    }
+  </script>
+</body>
+</html>

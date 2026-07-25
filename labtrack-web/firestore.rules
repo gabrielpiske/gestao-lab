@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function myRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && myRole() == 'ADMIN';
+    }
+
+    function isWriter() {
+      // ADMIN e DOCENTE podem cadastrar/editar; VISITANTE só consulta.
+      return isSignedIn() && myRole() in ['ADMIN', 'DOCENTE'];
+    }
+
+    /* ---------------- USERS ---------------- */
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      // Auto-cadastro: o próprio usuário só pode criar o PRÓPRIO documento,
+      // e sempre com papel VISITANTE (evita se auto-promover a ADMIN).
+      allow create: if isAdmin()
+        || (isSignedIn() && request.auth.uid == userId
+            && request.resource.data.role == 'VISITANTE'
+            && request.resource.data.active == true);
+
+      // Um usuário pode atualizar o próprio perfil, mas NUNCA o próprio papel
+      // ou status de ativo/inativo — só um ADMIN pode fazer isso.
+      allow update: if isAdmin()
+        || (isSignedIn() && request.auth.uid == userId
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.active == resource.data.active);
+
+      allow delete: if isAdmin();
+    }
+
+    /* ---------------- COMPONENT TYPES (+ atributos + opções embutidos) ---------------- */
+    match /componentTypes/{typeId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /* ---------------- COMPONENTS ---------------- */
+    match /components/{componentId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isWriter();
+    }
+
+    /* ---------------- STOCK MOVEMENTS (trilha de auditoria imutável) ---------------- */
+    match /stockMovements/{movementId} {
+      allow read: if isSignedIn();
+      allow create: if isWriter() && request.resource.data.userId == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    /* ---------------- TOOLS ---------------- */
+    match /tools/{toolId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isWriter();
+    }
+
+    /* ---------------- TOOL LOANS ---------------- */
+    match /toolLoans/{loanId} {
+      allow read: if isSignedIn();
+      allow create: if isWriter() && request.resource.data.userId == request.auth.uid;
+      allow update: if isWriter(); // usado para registrar a devolução (returnedAt)
+      allow delete: if isAdmin();
+    }
+  }
+}

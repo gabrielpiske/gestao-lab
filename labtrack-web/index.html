@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — LabTrack</title>
+  <script>document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('labtrack_theme') || 'dark');</script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div id="app-shell">
+    <div style="max-width: 960px;">
+      <h1 class="h5 mb-4">Dashboard</h1>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="lt-stat-card">
+            <p class="small text-body-secondary mb-1"><i class="bi bi-exclamation-triangle text-danger"></i> Estoque crítico</p>
+            <p class="lt-stat-value text-danger mb-0" id="stat-critical">—</p>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="lt-stat-card">
+            <p class="small text-body-secondary mb-1"><i class="bi bi-tools"></i> Ferramentas emprestadas</p>
+            <p class="lt-stat-value mb-0" id="stat-tools-borrowed">—</p>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="lt-stat-card">
+            <p class="small text-body-secondary mb-1"><i class="bi bi-cpu"></i> Componentes cadastrados</p>
+            <p class="lt-stat-value mb-0" id="stat-components-total">—</p>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="lt-stat-card">
+            <p class="small text-body-secondary mb-1"><i class="bi bi-activity"></i> Movimentações (7 dias)</p>
+            <p class="lt-stat-value mb-0" id="stat-movements-7d">—</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12 col-lg-6">
+          <div class="lt-card p-3">
+            <p class="fw-medium small mb-3">Estoque crítico</p>
+            <div id="critical-list" class="d-flex flex-column gap-2">
+              <p class="text-body-secondary small">Carregando...</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-lg-6">
+          <div class="lt-card p-3">
+            <p class="fw-medium small mb-3">Últimas movimentações</p>
+            <div id="recent-movements-list" class="d-flex flex-column gap-2">
+              <p class="text-body-secondary small">Carregando...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
