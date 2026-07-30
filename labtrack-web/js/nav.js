@@ -61,7 +61,7 @@ export function renderLayout(user, activePageKey) {
         <!-- Rodapé do Usuário Logado -->
         <div class="border-top pt-3 mt-3">
           <p class="small text-body-secondary mb-1 px-1">${escapeHtml(user.name)}</p>
-          <p class="small text-body-secondary mb-2 px-1">${roleLabel(user.role)}</p>
+          <!-- <p class="small text-body-secondary mb-2 px-1">${roleLabel(user.role)}</p> -->
           <button id="logout-btn" class="btn btn-sm btn-outline-secondary w-100">
             <i class="bi bi-box-arrow-right"></i> Sair
           </button>
