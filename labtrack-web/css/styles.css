@@ -1,116 +1,293 @@
 /* css/styles.css */
 
 :root {
-  --lt-sidebar-width: 220px;
-  --lt-radius: 0.5rem;
+  --lt-sidebar-width: 230px;
+  --lt-radius: 12px;
+  --lt-transition: .25s ease;
+
+  /* Identidade LabTrack */
+  --lt-primary: #0066d4;
+  --lt-primary-hover: #0053ad;
+  --lt-primary-light: rgba(0,102,212,.12);
+  --lt-shadow: 0 4px 18px rgba(0,0,0,.08);
+}
+
+/* ===========================
+   LIGHT THEME
+=========================== */
+
+[data-bs-theme="light"] {
+  --lt-sidebar-bg: #f5f8fc;
+  --lt-card-bg: #ffffff;
+  --lt-hover: #e9f2ff;
+  --lt-border: #d7e2ef;
+}
+
+/* ===========================
+   DARK THEME
+=========================== */
+
+[data-bs-theme="dark"] {
+  --lt-sidebar-bg: #161d27;
+  --lt-card-bg: #1d2633;
+  --lt-hover: rgba(0,102,212,.18);
+  --lt-border: #2b3647;
 }
 
 body {
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 0.9rem;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: .9rem;
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
 }
 
-/* ---------- Layout ---------- */
+/* ====================================================
+   SIDEBAR
+==================================================== */
 
 .labtrack-sidebar {
   width: var(--lt-sidebar-width);
   min-width: var(--lt-sidebar-width);
-  border-right: 1px solid var(--bs-border-color);
-  background-color: var(--bs-tertiary-bg);
+  background: var(--lt-sidebar-bg);
+  border-right: 1px solid var(--lt-border);
+  transition: var(--lt-transition);
 }
 
 .labtrack-sidebar .nav-link {
   color: var(--bs-secondary-color);
-  border-radius: var(--lt-radius);
-  padding: 0.4rem 0.6rem;
-  font-size: 0.85rem;
+  border-radius: 10px;
+  padding: .65rem .85rem;
+  margin-bottom: .25rem;
+  font-size: .88rem;
+  font-weight: 500;
+
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: .65rem;
+
+  transition: var(--lt-transition);
+}
+
+.labtrack-sidebar .nav-link i {
+  font-size: 1rem;
 }
 
 .labtrack-sidebar .nav-link:hover {
-  background-color: var(--bs-secondary-bg);
-  color: var(--bs-body-color);
+  background: var(--lt-hover);
+  color: var(--lt-primary);
+  transform: translateX(3px);
 }
 
 .labtrack-sidebar .nav-link.active {
-  background-color: var(--bs-secondary-bg);
-  color: var(--bs-body-color);
+  background: linear-gradient(
+      90deg,
+      var(--lt-primary),
+      #0084ff
+  );
+
+  color: white;
   font-weight: 600;
+  box-shadow: 0 5px 12px rgba(0,102,212,.25);
 }
+
+.labtrack-sidebar .nav-link.active i {
+  color: white;
+}
+
+/* ====================================================
+   TOPBAR
+==================================================== */
 
 .labtrack-topbar {
-  height: 52px;
-  min-height: 52px;
-  border-bottom: 1px solid var(--bs-border-color);
+  height: 60px;
+  min-height: 60px;
+
+  background: var(--lt-card-bg);
+
+  border-bottom: 1px solid var(--lt-border);
+
+  backdrop-filter: blur(10px);
 }
 
-/* ---------- Cards e tabelas ---------- */
+/* ====================================================
+   CARDS
+==================================================== */
 
-.lt-card {
-  background-color: var(--bs-tertiary-bg);
-  border: 1px solid var(--bs-border-color);
+.lt-card,
+.lt-stat-card {
+  background: var(--lt-card-bg);
+  border: 1px solid var(--lt-border);
   border-radius: var(--lt-radius);
+  box-shadow: var(--lt-shadow);
+  transition: var(--lt-transition);
+}
+
+.lt-card:hover,
+.lt-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
 }
 
 .lt-stat-card {
-  background-color: var(--bs-tertiary-bg);
-  border: 1px solid var(--bs-border-color);
-  border-radius: var(--lt-radius);
-  padding: 1rem;
+  padding: 1.2rem;
 }
 
 .lt-stat-card .lt-stat-value {
-  font-size: 1.6rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--lt-primary);
+}
+
+.lt-stat-card small {
+  color: var(--bs-secondary-color);
+}
+
+/* ====================================================
+   BOTÕES
+==================================================== */
+
+.btn-primary {
+  background: var(--lt-primary);
+  border-color: var(--lt-primary);
+}
+
+.btn-primary:hover {
+  background: var(--lt-primary-hover);
+  border-color: var(--lt-primary-hover);
+}
+
+/* ====================================================
+   TABELAS
+==================================================== */
+
+.table {
+  margin-bottom: 0;
+}
+
+.table thead th {
   font-weight: 600;
+  border-bottom: 2px solid var(--lt-border);
+  color: var(--lt-primary);
 }
 
 .table > :not(caption) > * > * {
-  background-color: transparent;
+  background: transparent;
 }
 
 .lt-clickable-row {
   cursor: pointer;
+  transition: var(--lt-transition);
 }
 
 .lt-clickable-row:hover {
-  background-color: var(--bs-secondary-bg);
+  background: var(--lt-hover);
 }
 
-/* ---------- Login ---------- */
+/* ====================================================
+   LOGIN
+==================================================== */
 
 .lt-auth-page {
   min-height: 100vh;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bs-body-bg);
+
+  background:
+    radial-gradient(circle at top right,
+      rgba(0,102,212,.15),
+      transparent 45%),
+    radial-gradient(circle at bottom left,
+      rgba(0,132,255,.12),
+      transparent 45%),
+    var(--bs-body-bg);
 }
 
 .lt-auth-card {
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
+
+  background: var(--lt-card-bg);
+
+  border: 1px solid var(--lt-border);
+
+  border-radius: 18px;
+
+  box-shadow: 0 20px 40px rgba(0,0,0,.18);
 }
 
-/* ---------- Badges de status de ferramenta ---------- */
+/* ====================================================
+   BADGES
+==================================================== */
 
 .lt-badge-dot::before {
   content: "";
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: currentColor;
-  margin-right: 0.35rem;
-}
-
-/* Scrollbar discreta */
-::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+
+  border-radius: 50%;
+
+  display: inline-block;
+
+  background: currentColor;
+
+  margin-right: .45rem;
 }
+
+/* ====================================================
+   SCROLLBAR
+==================================================== */
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
 ::-webkit-scrollbar-thumb {
-  background-color: var(--bs-border-color);
-  border-radius: 4px;
+  background: rgba(0,102,212,.35);
+  border-radius: 50px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,102,212,.55);
+}
+
+/* ====================================================
+   INPUTS
+==================================================== */
+
+.form-control,
+.form-select {
+  border-radius: 10px;
+  transition: var(--lt-transition);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--lt-primary);
+  box-shadow: 0 0 0 .2rem rgba(0,102,212,.18);
+}
+
+/* ====================================================
+   DROPDOWNS
+==================================================== */
+
+.dropdown-menu {
+  border-radius: 12px;
+  border: 1px solid var(--lt-border);
+  box-shadow: var(--lt-shadow);
+}
+
+/* ====================================================
+   ANIMAÇÕES
+==================================================== */
+
+.lt-card,
+.lt-stat-card,
+.btn,
+.nav-link,
+.form-control,
+.table {
+  transition: all .25s ease;
 }

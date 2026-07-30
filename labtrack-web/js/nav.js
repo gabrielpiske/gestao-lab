@@ -38,13 +38,27 @@ export function renderLayout(user, activePageKey) {
   shell.innerHTML = `
     <div class="d-flex vh-100">
       <aside class="labtrack-sidebar d-flex flex-column p-3">
+        <!-- Cabeçalho Superior da Sidebar -->
         <div class="px-1 pb-3 mb-2 border-bottom">
-          <span class="fw-semibold">LabTrack</span>
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-cpu-fill text-primary fs-4"></i>
+              <span class="fw-bold fs-5 tracking-wide">LabTrack</span>
+            </div>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill" style="font-size: 0.65rem;">v1.0</span>
+          </div>
+          <div class="mt-2 ps-1">
+            <p class="small fw-semibold mb-0 text-body" style="font-size: 0.85rem;">Gabriel Piske</p>
+            <p class="text-body-secondary mb-0" style="font-size: 0.75rem;"><i class="bi bi-mortarboard-fill me-1"></i>Docente SENAI</p>
+          </div>
         </div>
+
         <nav class="nav flex-column gap-1 flex-grow-1">
           ${navLinks}
           ${adminLink}
         </nav>
+
+        <!-- Rodapé do Usuário Logado -->
         <div class="border-top pt-3 mt-3">
           <p class="small text-body-secondary mb-1 px-1">${escapeHtml(user.name)}</p>
           <p class="small text-body-secondary mb-2 px-1">${roleLabel(user.role)}</p>
