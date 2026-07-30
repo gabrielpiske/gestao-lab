@@ -17,7 +17,7 @@ service cloud.firestore {
 
     function isWriter() {
       // ADMIN e DOCENTE podem cadastrar/editar; VISITANTE só consulta.
-      return isSignedIn() && myRole() in ['ADMIN', 'DOCENTE'];
+      return isSignedIn() && myRole() in ['ADMIN', 'DOCENTE', 'ALUNO'];
     }
 
     /* ---------------- USERS ---------------- */

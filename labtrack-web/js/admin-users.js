@@ -10,7 +10,7 @@ import { secondaryAuth, db } from "./firebase-config.js";
 const user = await requireAuth({ requireAdmin: true });
 renderLayout(user, "admin-users");
 
-const ROLE_LABELS = { ADMIN: "Administrador", DOCENTE: "Docente", VISITANTE: "Visitante" };
+const ROLE_LABELS = { ADMIN: "Administrador", DOCENTE: "Docente", VISITANTE: "Visitante", ALUNO: "Aluno" };
 const tbody = document.getElementById("users-tbody");
 
 document.getElementById("new-user-form").addEventListener("submit", onCreateUser);
