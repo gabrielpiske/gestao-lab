@@ -109,9 +109,7 @@ export function normalizeSearch(text) {
 
 export const STOCK_MOVEMENT_REASONS = [
   { value: "COMPRA", label: "Compra" },
-  { value: "DOACAO", label: "Doação" },
   { value: "AULA_PRATICA", label: "Aula prática" },
-  { value: "PERDA", label: "Perda" },
   { value: "DESCARTE", label: "Descarte" },
   { value: "AJUSTE_INVENTARIO", label: "Ajuste de inventário" },
 ];
