@@ -70,8 +70,16 @@ service cloud.firestore {
     /* ---------------- TOOL LOANS ---------------- */
     match /toolLoans/{loanId} {
       allow read: if isSignedIn();
-      allow create: if isWriter() && request.resource.data.userId == request.auth.uid;
-      allow update: if isWriter(); // usado para registrar a devolução (returnedAt)
+
+      allow create: if isWriter()
+          && request.resource.data.userId == request.auth.uid;
+
+      allow update: if isAdmin()
+        || (
+            isWriter()
+            && resource.data.userId == request.auth.uid
+        );
+
       allow delete: if isAdmin();
     }
   }

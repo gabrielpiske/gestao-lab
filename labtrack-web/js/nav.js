@@ -107,7 +107,7 @@ export function renderLayout(user, activePageKey) {
 }
 
 function roleLabel(role) {
-  return { ADMIN: "Administrador", DOCENTE: "Docente", VISITANTE: "Visitante" }[role] || role;
+  return { ADMIN: "Administrador", DOCENTE: "Docente", VISITANTE: "Visitante", ALUNO: "Aluno" }[role] || role;
 }
 
 export function applyStoredTheme() {
