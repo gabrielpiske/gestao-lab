@@ -16,8 +16,8 @@ import {
   connectFirestoreEmulator,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-//import { enableIndexedDbPersistence } from "firebase/firestore";
-//enableIndexedDbPersistence(db).catch((err) => console.warn(err));
+import { enableIndexedDbPersistence } from "firebase/firestore";
+enableIndexedDbPersistence(db).catch((err) => console.warn(err));
 
 export const firebaseConfig = {
   apiKey: "AIzaSyCGObFHc5czbqtfcTSJ2FhrBL9Rx4GSuLk",
