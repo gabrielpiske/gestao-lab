@@ -5,7 +5,7 @@ import { escapeHtml } from "./utils.js";
 const NAV_ITEMS = [
   { key: "dashboard", href: "index.html", label: "Dashboard", icon: "bi-speedometer2" },
   { key: "components", href: "components.html", label: "Componentes", icon: "bi-cpu" },
-  { key: "tools", href: "tools.html", label: "Ferramentas", icon: "bi-tools" },
+  { key: "tools", href: "tools.html", label: "Equipamentos e Ferramentas", icon: "bi-tools" },
   { key: "movements", href: "movements.html", label: "Movimentações", icon: "bi-clock-history" },
 ];
 
