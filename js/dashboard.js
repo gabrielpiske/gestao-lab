@@ -15,6 +15,10 @@ async function loadSummary() {
   try {
     const summary = await dashboardSummary();
     document.getElementById("stat-critical").textContent = summary.componentsCriticalCount;
+    if (document.getElementById("stat-micro-borrowed")) {
+      document.getElementById("stat-micro-borrowed").textContent =
+        `${summary.microcontrollersBorrowedCount} de ${summary.microcontrollersTotalCount}`;
+    }
     document.getElementById("stat-tools-borrowed").textContent =
       `${summary.toolsBorrowedCount} de ${summary.toolsTotalCount}`;
     document.getElementById("stat-components-total").textContent = summary.componentsTotalCount;

@@ -25,36 +25,43 @@
       <div style="max-width: 960px">
         <h1 class="h5 mb-4">Dashboard</h1>
 
-        <div class="row g-3 mb-4">
-          <div class="col-6 col-md-3">
+        <div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-lg-5">
+          <div class="col">
             <div class="lt-stat-card">
               <p class="small text-body-secondary mb-1">
-                <i class="bi bi-exclamation-triangle text-danger"></i> Estoque
-                crítico
+                <i class="bi bi-exclamation-triangle text-danger"></i> Estoque crítico
               </p>
               <p class="lt-stat-value text-danger mb-0" id="stat-critical">—</p>
             </div>
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col">
             <div class="lt-stat-card">
               <p class="small text-body-secondary mb-1">
-                <i class="bi bi-tools"></i> Ferramentas emprestadas
+                <i class="bi bi-motherboard text-primary"></i> Microcontroladores
+              </p>
+              <p class="lt-stat-value mb-0" id="stat-micro-borrowed">—</p>
+            </div>
+          </div>
+          <div class="col">
+            <div class="lt-stat-card">
+              <p class="small text-body-secondary mb-1">
+                <i class="bi bi-tools"></i> Ferramentas
               </p>
               <p class="lt-stat-value mb-0" id="stat-tools-borrowed">—</p>
             </div>
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col">
             <div class="lt-stat-card">
               <p class="small text-body-secondary mb-1">
-                <i class="bi bi-cpu"></i> Componentes cadastrados
+                <i class="bi bi-cpu"></i> Componentes
               </p>
               <p class="lt-stat-value mb-0" id="stat-components-total">—</p>
             </div>
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col">
             <div class="lt-stat-card">
               <p class="small text-body-secondary mb-1">
-                <i class="bi bi-activity"></i> Movimentações (7 dias)
+                <i class="bi bi-activity"></i> Movimentações (7d)
               </p>
               <p class="lt-stat-value mb-0" id="stat-movements-7d">—</p>
             </div>

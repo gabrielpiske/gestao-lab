@@ -331,6 +331,118 @@ export async function returnLoan(toolId, loanId) {
   });
 }
 
+/* ============================== MICROCONTROLADORES ============================== */
+
+const microcontrollersCol = collection(db, "microcontrollers");
+const microcontrollerLoansCol = collection(db, "microcontrollerLoans");
+
+export async function listMicrocontrollers({ status, family, q } = {}) {
+  let constraints = [orderBy("name")];
+  if (status) constraints = [where("status", "==", status), ...constraints];
+  if (family) constraints = [where("family", "==", family), ...constraints];
+  const snap = await getDocs(query(microcontrollersCol, ...constraints));
+  let items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  if (q) {
+    const needle = normalize(q);
+    items = items.filter((m) =>
+      [m.name, m.family, m.connectivity, m.patrimonio, m.model, m.manufacturer, m.location]
+        .filter(Boolean)
+        .some((f) => normalize(f).includes(needle))
+    );
+  }
+
+  return items;
+}
+
+export async function getMicrocontroller(id) {
+  const snap = await getDoc(doc(db, "microcontrollers", id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function createMicrocontroller(data) {
+  return addDoc(microcontrollersCol, {
+    ...data,
+    status: "DISPONIVEL",
+    currentLoan: null,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function updateMicrocontroller(id, patch) {
+  await updateDoc(doc(db, "microcontrollers", id), patch);
+}
+
+export async function deleteMicrocontroller(id) {
+  await deleteDoc(doc(db, "microcontrollers", id));
+}
+
+export async function listMicrocontrollerLoanHistory(microcontrollerId, max = 20) {
+  const snap = await getDocs(
+    query(
+      microcontrollerLoansCol,
+      where("microcontrollerId", "==", microcontrollerId),
+      orderBy("borrowedAt", "desc"),
+      fsLimit(max)
+    )
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function createMicrocontrollerLoan(microcontrollerId, { expectedReturnAt, notes }, user) {
+  const microcontrollerRef = doc(db, "microcontrollers", microcontrollerId);
+  const loanRef = doc(microcontrollerLoansCol);
+
+  await runTransaction(db, async (tx) => {
+    const microSnap = await tx.get(microcontrollerRef);
+    if (!microSnap.exists()) throw new Error("Microcontrolador não encontrado.");
+    const micro = microSnap.data();
+
+    if (micro.status !== "DISPONIVEL") {
+      throw new Error(`Microcontrolador não está disponível (status atual: ${micro.status}).`);
+    }
+
+    const expectedReturnTimestamp = expectedReturnAt ? Timestamp.fromDate(new Date(expectedReturnAt)) : null;
+
+    const loanData = {
+      microcontrollerId,
+      microcontrollerName: micro.name,
+      userId: user.uid,
+      userName: user.name,
+      borrowedAt: serverTimestamp(),
+      expectedReturnAt: expectedReturnTimestamp,
+      returnedAt: null,
+      notes: notes || "",
+    };
+
+    tx.set(loanRef, loanData);
+    tx.update(microcontrollerRef, {
+      status: "EMPRESTADA",
+      currentLoan: {
+        loanId: loanRef.id,
+        userId: user.uid,
+        userName: user.name,
+        borrowedAt: Timestamp.now(),
+        expectedReturnAt: expectedReturnTimestamp,
+      },
+    });
+  });
+}
+
+export async function returnMicrocontrollerLoan(microcontrollerId, loanId) {
+  const microcontrollerRef = doc(db, "microcontrollers", microcontrollerId);
+  const loanRef = doc(db, "microcontrollerLoans", loanId);
+
+  await runTransaction(db, async (tx) => {
+    const loanSnap = await tx.get(loanRef);
+    if (!loanSnap.exists()) throw new Error("Empréstimo não encontrado.");
+    if (loanSnap.data().returnedAt) throw new Error("Este empréstimo já foi devolvido.");
+
+    tx.update(loanRef, { returnedAt: serverTimestamp() });
+    tx.update(microcontrollerRef, { status: "DISPONIVEL", currentLoan: null });
+  });
+}
+
 /* ============================== USUÁRIOS ============================== */
 
 const usersCol = collection(db, "users");
@@ -347,12 +459,23 @@ export async function updateUser(uidToUpdate, patch) {
 /* ============================== DASHBOARD ============================== */
 
 export async function dashboardSummary() {
-  const [criticalCount, outOfStockCount, totalComponents, totalTools, borrowedTools, movements7d] = await Promise.all([
+  const [
+    criticalCount,
+    outOfStockCount,
+    totalComponents,
+    totalTools,
+    borrowedTools,
+    totalMicrocontrollers,
+    borrowedMicrocontrollers,
+    movements7d,
+  ] = await Promise.all([
     getCountFromServer(query(componentsCol, where("critical", "==", true))),
     getCountFromServer(query(componentsCol, where("quantity", "==", 0))),
     getCountFromServer(componentsCol),
     getCountFromServer(toolsCol),
     getCountFromServer(query(toolsCol, where("status", "==", "EMPRESTADA"))),
+    getCountFromServer(microcontrollersCol),
+    getCountFromServer(query(microcontrollersCol, where("status", "==", "EMPRESTADA"))),
     getCountFromServer(query(movementsCol, where("occurredAt", ">=", sevenDaysAgoTimestamp()))),
   ]);
 
@@ -362,6 +485,8 @@ export async function dashboardSummary() {
     componentsTotalCount: totalComponents.data().count,
     toolsTotalCount: totalTools.data().count,
     toolsBorrowedCount: borrowedTools.data().count,
+    microcontrollersTotalCount: totalMicrocontrollers.data().count,
+    microcontrollersBorrowedCount: borrowedMicrocontrollers.data().count,
     movementsLast7Days: movements7d.data().count,
   };
 }
@@ -383,3 +508,4 @@ function normalize(text) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 }
+

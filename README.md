@@ -1,108 +1,224 @@
-<img width="1329" height="860" alt="download" src="https://github.com/user-attachments/assets/8a79d992-7955-4247-a4c1-5969c3b8a59b" />
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1329.4094999999995 859.7709999999998" width="1329.4094999999995" height="859.7709999999998" style="--bg:#1F1F1F;--fg:#CCCCCC;--line:#CCCCCC;--accent:#0078D4;--muted:#CCCCCCCC;--surface:#181818;--border:#CCCCCC;background:var(--bg)">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
-  text { font-family: 'Inter', system-ui, sans-serif; }
-  svg {
-    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
-    --_text:          var(--fg);
-    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
-    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
-    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
-    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
-    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
-    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
-    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
-    --_group-fill:    var(--bg);
-    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
-    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
-    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
-  }
-</style>
-<defs>
-  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
-    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
-  </marker>
-  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
-    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
-  </marker>
-</defs>
-<polyline class="edge" data-from="A" data-to="B" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="536.6607499999999,76.9 536.6607499999998,124.9" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="B" data-to="C" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Não autenticado" points="503.31558333333317,291.6258333333334 503.31558333333317,396.971 436.8482499999999,396.971 436.8482499999998,477.27099999999996" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="B" data-to="D" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Autenticado" points="570.0059166666665,291.6258333333333 570.0059166666665,360.971 636.4732499999998,360.971 636.4732499999998,441.27099999999996" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="D" data-to="E" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="576.7664642857142,478.17099999999994 576.7664642857142,526.1709999999999 127.29449999999997,526.1709999999999 127.29449999999997,526.1709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="D" data-to="F" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="600.6491785714284,478.17099999999994 600.6491785714284,575.0709999999999 224.58899999999994,575.0709999999999 224.58899999999983,611.0709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="D" data-to="G" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="624.5318928571427,478.17099999999994 624.5318928571427,587.0709999999999 519.0619999999999,587.0709999999999 519.0619999999999,611.0709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="D" data-to="H" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="648.414607142857,478.17099999999994 648.414607142857,587.0709999999999 753.8844999999998,587.0709999999999 753.8844999999998,611.0709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="D" data-to="I" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="672.2973214285713,478.17099999999994 672.2973214285713,502.17099999999994 900.9067499999998,502.17099999999994 900.9067499999998,526.1709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="D" data-to="J" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Se ADMIN" points="696.1800357142856,478.17099999999994 696.1800357142856,490.17099999999994 1093.9289999999996,490.17099999999994 1093.9289999999996,611.0709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="F" data-to="K" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="224.58899999999986,647.9709999999999 224.58899999999986,665.9709999999999 706.802857142857,665.9709999999999 706.802857142857,683.9709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="G" data-to="K" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="519.0619999999999,647.9709999999999 519.0619999999999,665.9709999999999 706.802857142857,665.9709999999999 706.802857142857,683.9709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="H" data-to="K" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="753.8844999999998,647.9709999999999 753.8844999999998,665.9709999999999 706.802857142857,665.9709999999999 706.802857142857,683.9709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="J" data-to="K" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1093.9289999999996,647.9709999999999 1093.9289999999996,665.9709999999999 706.802857142857,665.9709999999999 706.802857142857,683.9709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<polyline class="edge" data-from="K" data-to="L" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="706.802857142857,720.8709999999999 706.802857142857,768.8709999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
-<g class="edge-label" data-from="B" data-to="C" data-label="Não autenticado">
-  <rect x="389.8482499999999" y="403.971" width="93.08800000000002" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
-  <text x="436.3922499999999" y="419.121" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Não autenticado</text>
-</g>
-<g class="edge-label" data-from="B" data-to="D" data-label="Autenticado">
-  <rect x="599.4732499999998" y="367.971" width="73.486" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
-  <text x="636.2162499999998" y="383.121" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Autenticado</text>
-</g>
-<g class="edge-label" data-from="D" data-to="J" data-label="Se ADMIN">
-  <rect x="1060.9289999999996" y="549.771" width="65.17" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
-  <text x="1093.5139999999997" y="564.9209999999999" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Se ADMIN</text>
-</g>
-<g class="node" data-id="A" data-label="Usuário" data-shape="rectangle">
-  <rect x="491.9737499999999" y="40" width="89.374" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="536.6607499999999" y="58.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Usuário</text>
-</g>
-<g class="node" data-id="B" data-label="Autenticação Firebase" data-shape="diamond">
-  <polygon points="536.6607499999998,124.9 636.6962499999997,224.9355 536.6607499999998,324.971 436.6252499999998,224.9355" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="536.6607499999998" y="224.9355" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Autenticação Firebase</text>
-</g>
-<g class="node" data-id="C" data-label="login.html / register.html" data-shape="rectangle">
-  <rect x="348.8127499999998" y="477.27099999999996" width="176.07099999999997" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="436.8482499999998" y="495.72099999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">login.html / register.html</text>
-</g>
-<g class="node" data-id="D" data-label="auth-guard.js &amp; nav.js" data-shape="rectangle">
-  <rect x="552.8837499999998" y="441.27099999999996" width="167.179" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="636.4732499999999" y="459.72099999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">auth-guard.js &amp; nav.js</text>
-</g>
-<g class="node" data-id="E" data-label="Dashboard - index.html" data-shape="rectangle">
-  <rect x="40" y="526.1709999999999" width="174.58899999999997" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="127.29449999999999" y="544.621" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Dashboard - index.html</text>
-</g>
-<g class="node" data-id="F" data-label="Componentes - components.html / component-form.html" data-shape="rectangle">
-  <rect x="48.3744999999999" y="611.0709999999999" width="352.4289999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="224.58899999999986" y="629.521" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Componentes - components.html / component-form.html</text>
-</g>
-<g class="node" data-id="G" data-label="Ferramentas - tools.html" data-shape="rectangle">
-  <rect x="428.8034999999999" y="611.0709999999999" width="180.51699999999997" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="519.0619999999999" y="629.521" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Ferramentas - tools.html</text>
-</g>
-<g class="node" data-id="H" data-label="Movimentações - movements.html" data-shape="rectangle">
-  <rect x="637.3204999999998" y="611.0709999999999" width="233.12799999999993" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="753.8844999999998" y="629.521" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Movimentações - movements.html</text>
-</g>
-<g class="node" data-id="I" data-label="Busca Global - search.html" data-shape="rectangle">
-  <rect x="802.8677499999998" y="526.1709999999999" width="196.078" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="900.9067499999998" y="544.621" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Busca Global - search.html</text>
-</g>
-<g class="node" data-id="J" data-label="Admin Tipos &amp; Usuários - admin-types.html / admin-users.html" data-shape="rectangle">
-  <rect x="898.4484999999997" y="611.0709999999999" width="390.96099999999984" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="1093.9289999999996" y="629.521" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Admin Tipos &amp; Usuários - admin-types.html / admin-users.html</text>
-</g>
-<g class="node" data-id="K" data-label="Camada de Dados Centralizada: data.js" data-shape="rectangle">
-  <rect x="572.454857142857" y="683.9709999999999" width="268.6959999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="706.802857142857" y="702.4209999999999" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Camada de Dados Centralizada: data.js</text>
-</g>
-<g class="node" data-id="L" data-label="Cloud Firestore" data-shape="cylinder">
-  <rect x="639.5153571428568" y="775.8709999999999" width="134.57500000000002" height="36.900000000000006" fill="var(--_node-fill)" stroke="none" />
-  <line x1="639.5153571428568" y1="775.8709999999999" x2="639.5153571428568" y2="812.7709999999998" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <line x1="774.0903571428569" y1="775.8709999999999" x2="774.0903571428569" y2="812.7709999999998" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <ellipse cx="706.8028571428569" cy="812.7709999999998" rx="67.28750000000001" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <ellipse cx="706.8028571428569" cy="775.8709999999999" rx="67.28750000000001" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
-  <text x="706.8028571428569" y="794.3209999999999" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Cloud Firestore</text>
-</g>
-</svg>
+# ⚡ LabTrack — Sistema de Gestão de Laboratório Didático
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Versão-1.2-blue.svg" alt="Versão 1.2" />
+  <img src="https://img.shields.io/badge/Front--End-HTML5%20%7C%20CSS3%20%7C%20JS%20ES6+-yellow.svg" alt="Stack" />
+  <img src="https://img.shields.io/badge/UI-Bootstrap%205.3-7952b3.svg" alt="Bootstrap 5" />
+  <img src="https://img.shields.io/badge/Back--End-Firebase%20Auth%20%2B%20Firestore-FFA611.svg" alt="Firebase" />
+  <img src="https://img.shields.io/badge/Deploy-Vercel%20%7C%20Firebase%20Hosting-000000.svg" alt="Deploy" />
+</p>
+
+O **LabTrack** é uma aplicação web moderna e eficiente para o gerenciamento de componentes eletrônicos, placas de desenvolvimento (Arduino, ESP32, Raspberry Pi Pico) e ferramentas em laboratórios didáticos de cursos técnicos e de engenharia (como SENAI e universidades).
+
+Projetado sob uma arquitetura leve e direta: **sem etapa de build, sem frameworks pesados e sem servidor próprio** — apenas JavaScript modular nativo (ES Modules), Bootstrap 5 via CDN, Cloud Firestore para persistência de dados em tempo real e Firebase Authentication para controle de acesso.
+
+---
+
+## 🧭 Índice
+
+- [Por que essa arquitetura?](#-por-que-essa-arquitetura)
+- [Funcionalidades Principais](#-funcionalidades-principais)
+- [Estrutura do Projeto](#-estrutura-do-projeto)
+- [Modelo de Dados (Cloud Firestore)](#-modelo-de-dados-cloud-firestore)
+- [Controle de Acesso e Papéis (RBAC)](#-controle-de-acesso-e-papéis-rbac)
+- [Guia de Instalação e Configuração Local](#-guia-de-instalação-e-configuração-local)
+- [Deploy em Produção (Vercel & Firebase Hosting)](#-deploy-em-produção)
+- [Como Criar o Primeiro Administrador](#-como-criar-o-primeiro-administrador)
+- [Licença e Autoria](#-licença-e-autoria)
+
+---
+
+## 💡 Por que essa arquitetura?
+
+- **Zero Build Step:** Não exige Node.js, Webpack, Vite ou npm install para rodar a aplicação. Qualquer servidor HTTP estático serve o projeto instantaneamente.
+- **Segurança no Banco de Dados:** A autorização por papel roda diretamente no Firestore através de regras declarativas (`firestore.rules`), impedindo acessos indevidos mesmo com chamadas diretas de API no cliente.
+- **Transações Atômicas:** Entradas/saídas de estoque e fluxos de empréstimo utilizam `runTransaction` no Firestore, garantindo consistência estrita contra acessos concorrentes.
+- **Deploy Universal:** Pronto para hospedagem estática direta tanto na **Vercel** quanto no **Firebase Hosting**.
+
+---
+
+## ✨ Funcionalidades Principais
+
+### 1. 🔌 Microcontroladores e Placas de Desenvolvimento
+- Seção dedicada para controle de Arduinos, ESP32, ESP8266, Raspberry Pi Pico, ARM/STM32, PIC, etc.
+- Atributos técnicos especializados: Família/Arquitetura, Conectividade (USB, Wi-Fi, Bluetooth, LoRa), Tensão de operação, Patrimônio/Kit e Localização.
+- Fluxo de empréstimo e devolução em 1 clique com registro de data prevista e responsável.
+
+### 2. 🧩 Tipos de Componentes Dinâmicos e Cadastro Flexível
+- Criação de novos tipos de componentes (ex.: Resistor, Capacitor, Circuito Integrado, Sensor) diretamente pela UI (`admin-types.html`).
+- Adição dinâmica de atributos customizados por tipo (Texto, Número, Seleção de Lista de Valores, Booleano, Unidades de Medida).
+- Formulário inteligente (`component-form.html`) gerado dinamicamente com base no tipo escolhido.
+
+### 3. 📦 Estoque e Auditoria Imutável
+- Quantidade em estoque manipulada exclusivamente via registro de movimentações (Compra, Aula Prática, Descarte, Ajuste de Inventário).
+- Cálculo automático de **Estoque Crítico** (`quantity <= minQuantity`).
+- Trilha de auditoria imutável (`stockMovements`) registrando autor, data, motivo e observações.
+
+### 4. 🛠️ Equipamentos e Ferramentas
+- Cadastro com patrimônio, fabricante, modelo, número de série e estado de conservação (Novo, Bom, Desgastado, Danificado).
+- Empréstimo e devolução ágeis com identificação imediata do responsável.
+
+### 5. 📊 Dashboard e Busca Global
+- Contadores em tempo real de estoque crítico, microcontroladores e ferramentas emprestadas, total de componentes e movimentações dos últimos 7 dias.
+- Busca unificada no topo da aplicação com normalização de acentos e *debounce* para digitação suave.
+
+### 6. 👤 Gestão de Usuários e Permissões
+- Papéis definidos: `ADMIN`, `DOCENTE`, `ALUNO`, `VISITANTE`.
+- Painel administrativo (`admin-users.html`) com ativação/desativação e criação direta de usuários com instâncias seguras (`secondaryAuth`).
+
+### 7. 🌓 Dark / Light Mode Nativo
+- Alternância rápida com persistência no `localStorage` e renderização suave com Bootstrap 5.
+
+---
+
+## 📂 Estrutura do Projeto
+
+```text
+gestao-lab/
+├── index.html                # Painel principal / Dashboard com indicadores
+├── login.html                # Tela de autenticação por e-mail e senha
+├── register.html             # Cadastro público inicial (papel padrão: Visitante)
+├── components.html           # Listagem e filtros do inventário de componentes
+├── component-form.html       # Criação/edição dinâmica de componentes e histórico de estoque
+├── microcontrollers.html     # Gestão dedicada e empréstimo de microcontroladores/placas
+├── tools.html                # Gestão e empréstimo de ferramentas e instrumentos
+├── movements.html            # Trilha completa de auditoria de movimentações de estoque
+├── search.html               # Resultados da busca global
+├── admin-types.html          # Administração de tipos de componentes e atributos
+├── admin-users.html          # Gestão e promoção de usuários e papéis
+├── firebase.json             # Configuração do Firebase Hosting e Firestore
+├── firestore.rules           # Regras de segurança e autorização (RBAC) do Firestore
+├── firestore.indexes.json    # Índices compostos para consultas e ordenações
+├── vercel.json               # Configuração de rotas limpas e headers para Vercel
+├── .gitignore                # Arquivos ignorados pelo Git
+├── css/
+│   └── styles.css            # Estilos personalizados, variáveis de tema e layout
+└── js/
+    ├── firebase-config.js    # Credenciais e inicialização do Firebase
+    ├── firebase-config.example.js # Template de configuração para novos clones
+    ├── auth-guard.js         # Guarda de rotas, verificação de sessão e perfil
+    ├── data.js               # Camada centralizada de acesso e transações do Firestore
+    ├── nav.js                # Renderização da sidebar, topbar e limpeza de modais
+    ├── utils.js              # Helpers de formatação, debounce, escape de HTML e constantes
+    ├── dashboard.js          # Lógica do painel de controle
+    ├── components.js         # Lógica da listagem de componentes
+    ├── component-form.js     # Lógica do formulário dinâmico de componentes
+    ├── microcontrollers.js   # Lógica do módulo de microcontroladores
+    ├── tools.js              # Lógica do módulo de ferramentas
+    ├── movements.js          # Lógica da página de movimentações
+    ├── search.js             # Lógica da busca global
+    ├── admin-types.js        # Lógica de criação de tipos e atributos dinâmicos
+    └── admin-users.js        # Lógica da administração de usuários
+```
+
+---
+
+## 🗄️ Modelo de Dados (Cloud Firestore)
+
+| Coleção | Propósito | Estrutura Principal |
+| :--- | :--- | :--- |
+| `componentTypes/{id}` | Definição dos tipos e esquemas de atributos | `name, description, attributes: [{ id, name, dataType, unit, required, options: [...] }]` |
+| `components/{id}` | Componentes em estoque | `componentTypeId, componentTypeName, quantity, minQuantity, critical, location, attributes: { attrId: value }` |
+| `stockMovements/{id}` | Trilha imutável de movimentação | `componentId, type (ENTRADA/SAIDA), reason, quantity, userId, userName, occurredAt` |
+| `microcontrollers/{id}`| Placas e microcontroladores | `name, family, connectivity, voltage, patrimonio, condition, status, currentLoan: { userId, userName, borrowedAt, expectedReturnAt }` |
+| `microcontrollerLoans/{id}` | Histórico de empréstimos de placas | `microcontrollerId, userId, userName, borrowedAt, expectedReturnAt, returnedAt, notes` |
+| `tools/{id}` | Ferramentas e equipamentos | `name, patrimonio, condition, status, currentLoan: { userId, userName, borrowedAt, expectedReturnAt }` |
+| `toolLoans/{id}` | Histórico de empréstimos de ferramentas | `toolId, userId, userName, borrowedAt, expectedReturnAt, returnedAt, notes` |
+| `users/{uid}` | Perfil e autorização do usuário | `name, email, role (ADMIN / DOCENTE / ALUNO / VISITANTE), active (boolean), createdAt` |
+
+---
+
+## 🛡️ Controle de Acesso e Papéis (RBAC)
+
+| Papel | Permissões |
+| :--- | :--- |
+| **`ADMIN`** | Acesso irrestrito a todo o sistema, promoção de papéis, ativação/desativação de contas e criação de tipos de componentes. |
+| **`DOCENTE`** | Cadastro/edição de componentes, registro de movimentações de estoque, cadastro e empréstimo de ferramentas e microcontroladores. |
+| **`ALUNO`** | Consulta de inventário, disponibilidade de placas/ferramentas e registro de empréstimos para aulas práticas. |
+| **`VISITANTE`** | Acesso somente leitura ao catálogo e disponibilidade do laboratório (papel inicial de todo novo cadastro). |
+
+---
+
+## 🚀 Guia de Instalação e Configuração Local
+
+### 1. Clonar o Repositório
+```bash
+git clone https://github.com/gabrielpiske/gestao-lab.git
+cd gestao-lab
+```
+
+### 2. Configurar o Firebase
+1. Acesse o [Firebase Console](https://console.firebase.google.com/) e crie um novo projeto.
+2. Em **Build > Authentication**, ative o provedor **Email/senha**.
+3. Em **Build > Firestore Database**, crie o banco de dados em **Modo Produção**.
+4. Em **Configurações do Projeto > Seus apps**, adicione um App Web e copie as credenciais.
+5. Copie `js/firebase-config.example.js` para `js/firebase-config.js` e insira suas credenciais:
+   ```javascript
+   export const firebaseConfig = {
+     apiKey: "SUA_API_KEY",
+     authDomain: "seu-projeto.firebaseapp.com",
+     projectId: "seu-projeto",
+     storageBucket: "seu-projeto.firebasestorage.app",
+     messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+     appId: "SEU_APP_ID"
+   };
+   ```
+
+### 3. Publicar Regras de Segurança e Índices
+Com a [Firebase CLI](https://firebase.google.com/docs/cli) instalada:
+```bash
+npm install -g firebase-tools
+firebase login
+firebase use --add  # Selecione o seu projeto Firebase criado
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
+### 4. Executar Localmente
+Como o projeto utiliza ES Modules nativos (`import`/`export`), utilize qualquer servidor HTTP local:
+```bash
+# Opção 1: Via Node.js (npx)
+npx serve .
+
+# Opção 2: Via Python 3
+python -m http.server 8000
+```
+Acesse `http://localhost:8000` (ou a porta informada).
+
+---
+
+## 🌐 Deploy em Produção
+
+### Deploy na Vercel
+O projeto já está configurado para deploy imediato na raiz da Vercel:
+1. Conecte o repositório na [Vercel](https://vercel.com).
+2. O framework preset será detectado como **Other** (servidor estático).
+3. O arquivo [`vercel.json`](./vercel.json) já aplica rotas limpas e cabeçalhos de segurança automaticamente.
+4. Clique em **Deploy**.
+
+### Deploy no Firebase Hosting
+Caso deseje hospedar no Firebase Hosting:
+```bash
+firebase deploy --only hosting
+```
+
+---
+
+## 👑 Como Criar o Primeiro Administrador
+
+Por segurança, todo novo cadastro público via tela de registro (`register.html`) recebe o papel `VISITANTE`. Para promover sua conta ao primeiro `ADMIN`:
+
+1. Cadastre-se normalmente na tela de registro do sistema.
+2. No [Firebase Console](https://console.firebase.google.com/), acesse **Firestore Database > coleção `users`**.
+3. Localize o documento correspondente ao seu UID de usuário.
+4. Altere o valor do campo `role` de `"VISITANTE"` para `"ADMIN"` e salve.
+5. Recarregue a página da aplicação. O menu **Administração** estará liberado e você poderá gerenciar e promover novos usuários diretamente pela interface.
+
+---
+
+## 👨‍🏫 Autoria e Contribuições
+
+- **Autor:** Gabriel Piske
+- **Instituição:** SENAI
+- **Propósito:** Gestão de laboratórios didáticos, automação e controle educacional.
+
+Contribuições, sugestões e melhorias são sempre bem-vindas! Sinta-se à vontade para abrir uma *Issue* ou enviar um *Pull Request*.
