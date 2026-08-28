@@ -31,6 +31,30 @@
         { "fieldPath": "toolId", "order": "ASCENDING" },
         { "fieldPath": "borrowedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "microcontrollers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "microcontrollers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "family", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "microcontrollerLoans",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "microcontrollerId", "order": "ASCENDING" },
+        { "fieldPath": "borrowedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

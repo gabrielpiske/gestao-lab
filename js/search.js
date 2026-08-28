@@ -1,8 +1,8 @@
 // js/search.js
 import { requireAuth } from "./auth-guard.js";
 import { renderLayout } from "./nav.js";
-import { listComponents, listTools } from "./data.js";
-import { escapeHtml, getQueryParam, TOOL_STATUS_LABELS } from "./utils.js";
+import { listComponents, listTools, listMicrocontrollers } from "./data.js";
+import { escapeHtml, getQueryParam, TOOL_STATUS_LABELS, MICROCONTROLLER_STATUS_LABELS, MICROCONTROLLER_FAMILIES } from "./utils.js";
 
 const user = await requireAuth();
 renderLayout(user, "search");
@@ -11,10 +11,12 @@ const q = getQueryParam("q") || "";
 document.getElementById("search-title").textContent = q ? `Resultados para "${q}"` : "Resultados da busca";
 
 const componentsBox = document.getElementById("search-components");
+const microcontrollersBox = document.getElementById("search-microcontrollers");
 const toolsBox = document.getElementById("search-tools");
 
 if (!q) {
   componentsBox.innerHTML = `<p class="text-body-secondary small mb-0">Digite algo na busca para começar.</p>`;
+  if (microcontrollersBox) microcontrollersBox.innerHTML = `<p class="text-body-secondary small mb-0">—</p>`;
   toolsBox.innerHTML = `<p class="text-body-secondary small mb-0">—</p>`;
 } else {
   runSearch();
@@ -37,6 +39,31 @@ async function runSearch() {
       : `<p class="text-body-secondary small mb-0">Nenhum componente encontrado.</p>`;
   } catch (err) {
     componentsBox.innerHTML = `<p class="text-danger small mb-0">Erro ao buscar componentes.</p>`;
+  }
+
+  try {
+    const micros = await listMicrocontrollers({ q });
+    if (microcontrollersBox) {
+      microcontrollersBox.innerHTML = micros.length
+        ? micros
+            .slice(0, 15)
+            .map((m) => {
+              const statusInfo = MICROCONTROLLER_STATUS_LABELS[m.status] || { label: m.status, badge: "secondary" };
+              const familyLabel = MICROCONTROLLER_FAMILIES.find((f) => f.value === m.family)?.label || m.family || "";
+              return `
+                <div class="d-flex justify-content-between align-items-center small border-bottom pb-2 mb-2">
+                  <div>
+                    <a href="microcontrollers.html" class="text-decoration-none fw-medium">${escapeHtml(m.name)}</a>
+                    <span class="text-body-secondary ms-2">(${escapeHtml(familyLabel)})</span>
+                  </div>
+                  <span class="badge text-bg-${statusInfo.badge}">${statusInfo.label}</span>
+                </div>`;
+            })
+            .join("")
+        : `<p class="text-body-secondary small mb-0">Nenhum microcontrolador encontrado.</p>`;
+    }
+  } catch (err) {
+    if (microcontrollersBox) microcontrollersBox.innerHTML = `<p class="text-danger small mb-0">Erro ao buscar microcontroladores.</p>`;
   }
 
   try {

@@ -106,7 +106,7 @@ async function onCreateTool(e) {
     await createTool(data);
     showSuccess("Ferramenta cadastrada.");
     document.getElementById("tool-form").reset();
-    bootstrap.Modal.getInstance(document.getElementById("tool-modal")).hide();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("tool-modal")).hide();
     await loadTools();
   } catch (err) {
     errorBox.textContent = err.message || "Não foi possível cadastrar a ferramenta.";
@@ -119,8 +119,8 @@ function openLoanModal(toolId, toolName) {
   document.getElementById("loan-tool-name").textContent = toolName;
   document.getElementById("loan-form").reset();
   document.getElementById("loan-form-error").classList.add("d-none");
-  loanModal = loanModal || new bootstrap.Modal(document.getElementById("loan-modal"));
-  loanModal.show();
+  const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("loan-modal"));
+  modal.show();
 }
 
 async function onConfirmLoan(e) {
@@ -134,7 +134,7 @@ async function onConfirmLoan(e) {
   try {
     await createLoan(loanTargetToolId, { expectedReturnAt, notes }, user);
     showSuccess("Empréstimo registrado.");
-    loanModal.hide();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("loan-modal")).hide();
     await loadTools();
   } catch (err) {
     errorBox.textContent = err.message || "Não foi possível registrar o empréstimo.";

@@ -109,7 +109,7 @@ async function onCreateUser(e) {
 
     showSuccess(`Usuário "${name}" criado. Envie a senha provisória por um canal seguro.`);
     document.getElementById("new-user-form").reset();
-    bootstrap.Modal.getInstance(document.getElementById("new-user-modal")).hide();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("new-user-modal")).hide();
     await renderUsers();
   } catch (err) {
     errorBox.textContent = translateFirebaseError(err.code) || err.message;

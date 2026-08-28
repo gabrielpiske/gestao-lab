@@ -1,0 +1,29 @@
+# Dependências e Builds
+node_modules/
+dist/
+.output/
+
+# Firebase & Vercel
+.firebase/
+.vercel/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# IDEs e Editores
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Logs e arquivos locais temporários
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

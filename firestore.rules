@@ -82,5 +82,27 @@ service cloud.firestore {
 
       allow delete: if isAdmin();
     }
+
+    /* ---------------- MICROCONTROLLERS ---------------- */
+    match /microcontrollers/{microcontrollerId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isWriter();
+    }
+
+    /* ---------------- MICROCONTROLLER LOANS ---------------- */
+    match /microcontrollerLoans/{loanId} {
+      allow read: if isSignedIn();
+
+      allow create: if isWriter()
+          && request.resource.data.userId == request.auth.uid;
+
+      allow update: if isAdmin()
+        || (
+            isWriter()
+            && resource.data.userId == request.auth.uid
+        );
+
+      allow delete: if isAdmin();
+    }
   }
 }

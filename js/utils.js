@@ -127,3 +127,30 @@ export const TOOL_STATUS_LABELS = {
   MANUTENCAO: { label: "Manutenção", badge: "warning" },
   INDISPONIVEL: { label: "Indisponível", badge: "secondary" },
 };
+
+export const MICROCONTROLLER_FAMILIES = [
+  { value: "ARDUINO_AVR", label: "Arduino / AVR (ATmega328, Nano, Mega)" },
+  { value: "ESP32_ESP8266", label: "Espressif (ESP32, ESP8266, NodeMCU)" },
+  { value: "RPI_PICO", label: "Raspberry Pi (Pico, RP2040, RP2350)" },
+  { value: "ARM_STM32", label: "ARM / STM32 (BluePill, Nucleo)" },
+  { value: "PIC_MICROCHIP", label: "Microchip PIC / dsPIC" },
+  { value: "MICROBIT", label: "BBC micro:bit" },
+  { value: "OUTROS", label: "Outros / Kits Didáticos" },
+];
+
+export const MICROCONTROLLER_CONNECTIVITY = [
+  { value: "USB_APENAS", label: "Apenas USB" },
+  { value: "WIFI_BLUETOOTH", label: "Wi-Fi + Bluetooth" },
+  { value: "WIFI", label: "Wi-Fi" },
+  { value: "BLUETOOTH", label: "Bluetooth / BLE" },
+  { value: "LORA_ZIGBEE", label: "LoRa / Zigbee / RF" },
+  { value: "SEM_WIRELESS", label: "Sem conectividade sem fio" },
+];
+
+export const MICROCONTROLLER_STATUS_LABELS = {
+  DISPONIVEL: { label: "Disponível", badge: "success" },
+  EMPRESTADA: { label: "Emprestado", badge: "primary" },
+  MANUTENCAO: { label: "Manutenção", badge: "warning" },
+  INDISPONIVEL: { label: "Indisponível", badge: "secondary" },
+};
+
