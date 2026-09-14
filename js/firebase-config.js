@@ -1,10 +1,11 @@
 // js/firebase-config.js
 //
-// Configuração central do Firebase. Troque os valores abaixo pelos do SEU
-// projeto Firebase (Console > Configurações do projeto > Seus apps > SDK setup).
-// Este arquivo é seguro para ficar público no front-end: a chave "apiKey" do
-// Firebase não é secreta, quem protege os dados de verdade são as regras do
-// Firestore (arquivo firestore.rules) e as regras do Firebase Authentication.
+// Configuração central do Firebase.
+//
+// Nenhuma configuração de produção fica versionada: no deploy ela vem do
+// endpoint /api/firebase-config, alimentado pelas variáveis de ambiente da
+// Vercel. Esses identificadores precisam chegar ao navegador para o SDK Web
+// funcionar; portanto não substituem as regras do Firestore e do Auth.
 
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -16,15 +17,16 @@ import {
   connectFirestoreEmulator,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-export const firebaseConfig = {
-  apiKey: "AIzaSyCGObFHc5czbqtfcTSJ2FhrBL9Rx4GSuLk",
-  authDomain: "labtrack-web.firebaseapp.com",
-  projectId: "labtrack-web",
-  storageBucket: "labtrack-web.firebasestorage.app",
-  messagingSenderId: "73423277128",
-  appId: "1:73423277128:web:715d360bc5220a91385c7d",
-  measurementId: "G-V9K80ETS8F"
-};
+const response = await fetch("/api/firebase-config", { cache: "no-store" });
+if (!response.ok) {
+  throw new Error("Não foi possível carregar a configuração do Firebase.");
+}
+
+export const firebaseConfig = await response.json();
+const requiredConfigKeys = ["apiKey", "authDomain", "projectId", "storageBucket", "messagingSenderId", "appId"];
+if (!requiredConfigKeys.every((key) => typeof firebaseConfig[key] === "string" && firebaseConfig[key])) {
+  throw new Error("A configuração do Firebase está incompleta.");
+}
 
 // Segundo app do Firebase, usado apenas para o admin criar novos usuários
 // sem perder a própria sessão logada (ver js/admin-users.js).

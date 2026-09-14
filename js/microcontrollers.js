@@ -25,7 +25,7 @@ import {
 const user = await requireAuth();
 renderLayout(user, "microcontrollers");
 
-const canWrite = user.role !== "VISITANTE";
+const canWrite = ["ADMIN", "DOCENTE"].includes(user.role);
 if (canWrite) {
   document.getElementById("new-micro-btn").classList.remove("d-none");
 }

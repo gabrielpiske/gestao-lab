@@ -91,11 +91,13 @@ gestao-lab/
 ├── firestore.indexes.json    # Índices compostos para consultas e ordenações
 ├── vercel.json               # Configuração de rotas limpas e headers para Vercel
 ├── .gitignore                # Arquivos ignorados pelo Git
+├── api/
+│   └── firebase-config.js    # Endpoint Vercel que lê variáveis de ambiente
+├── .env.example              # Nomes das variáveis exigidas (sem valores)
 ├── css/
 │   └── styles.css            # Estilos personalizados, variáveis de tema e layout
 └── js/
-    ├── firebase-config.js    # Credenciais e inicialização do Firebase
-    ├── firebase-config.example.js # Template de configuração para novos clones
+    ├── firebase-config.js    # Inicialização do Firebase sem valores versionados
     ├── auth-guard.js         # Guarda de rotas, verificação de sessão e perfil
     ├── data.js               # Camada centralizada de acesso e transações do Firestore
     ├── nav.js                # Renderização da sidebar, topbar e limpeza de modais
@@ -134,7 +136,7 @@ gestao-lab/
 | :--- | :--- |
 | **`ADMIN`** | Acesso irrestrito a todo o sistema, promoção de papéis, ativação/desativação de contas e criação de tipos de componentes. |
 | **`DOCENTE`** | Cadastro/edição de componentes, registro de movimentações de estoque, cadastro e empréstimo de ferramentas e microcontroladores. |
-| **`ALUNO`** | Consulta de inventário, disponibilidade de placas/ferramentas e registro de empréstimos para aulas práticas. |
+| **`ALUNO`** | Consulta de inventário, disponibilidade de placas/ferramentas e histórico de movimentações. |
 | **`VISITANTE`** | Acesso somente leitura ao catálogo e disponibilidade do laboratório (papel inicial de todo novo cadastro). |
 
 ---
@@ -147,22 +149,14 @@ git clone https://github.com/gabrielpiske/gestao-lab.git
 cd gestao-lab
 ```
 
-### 2. Configurar o Firebase
+### 2. Configurar o Firebase e as variáveis de ambiente
 1. Acesse o [Firebase Console](https://console.firebase.google.com/) e crie um novo projeto.
 2. Em **Build > Authentication**, ative o provedor **Email/senha**.
 3. Em **Build > Firestore Database**, crie o banco de dados em **Modo Produção**.
 4. Em **Configurações do Projeto > Seus apps**, adicione um App Web e copie as credenciais.
-5. Copie `js/firebase-config.example.js` para `js/firebase-config.js` e insira suas credenciais:
-   ```javascript
-   export const firebaseConfig = {
-     apiKey: "SUA_API_KEY",
-     authDomain: "seu-projeto.firebaseapp.com",
-     projectId: "seu-projeto",
-     storageBucket: "seu-projeto.firebasestorage.app",
-     messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-     appId: "SEU_APP_ID"
-   };
-   ```
+5. Para desenvolvimento local com `vercel dev`, copie `.env.example` para `.env.local` e preencha os valores. Nunca versione esse arquivo.
+
+> A configuração de um app Web Firebase (inclusive `apiKey`) é entregue ao navegador pelo próprio SDK e não é um segredo de servidor. Ela foi retirada do Git para evitar exposição desnecessária no código-fonte. A proteção real vem das regras do Firestore, do Firebase Authentication e das restrições da chave no Google Cloud.
 
 ### 3. Publicar Regras de Segurança e Índices
 Com a [Firebase CLI](https://firebase.google.com/docs/cli) instalada:
@@ -189,16 +183,31 @@ Acesse `http://localhost:8000` (ou a porta informada).
 ## 🌐 Deploy em Produção
 
 ### Deploy na Vercel
-O projeto já está configurado para deploy imediato na raiz da Vercel:
+O projeto já está configurado para deploy na raiz da Vercel. Antes do primeiro deploy, em **Project Settings > Environment Variables**, cadastre as variáveis abaixo para os ambientes **Production**, **Preview** e **Development**:
+
+```text
+FIREBASE_API_KEY
+FIREBASE_AUTH_DOMAIN
+FIREBASE_PROJECT_ID
+FIREBASE_STORAGE_BUCKET
+FIREBASE_MESSAGING_SENDER_ID
+FIREBASE_APP_ID
+FIREBASE_MEASUREMENT_ID   # opcional
+```
+
+Use os valores do objeto de configuração do seu app Web no Firebase. A Vercel entrega esses valores em tempo de execução por `/api/firebase-config`; nenhum valor de produção deve ser adicionado a arquivos Git.
+
 1. Conecte o repositório na [Vercel](https://vercel.com).
 2. O framework preset será detectado como **Other** (servidor estático).
 3. O arquivo [`vercel.json`](./vercel.json) já aplica rotas limpas e cabeçalhos de segurança automaticamente.
 4. Clique em **Deploy**.
 
 ### Deploy no Firebase Hosting
-Caso deseje hospedar no Firebase Hosting:
+O fluxo de configuração acima usa uma Function da Vercel e, portanto, o deploy recomendado é pela Vercel. Para Firebase Hosting, implemente um endpoint equivalente no Cloud Functions/Cloud Run antes de publicar; não recoloque a configuração de produção em `js/firebase-config.js`.
+
+Para publicar apenas regras e índices do Firestore:
 ```bash
-firebase deploy --only hosting
+firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 ---

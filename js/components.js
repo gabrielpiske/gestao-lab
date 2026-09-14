@@ -7,7 +7,7 @@ import { escapeHtml, debounce } from "./utils.js";
 const user = await requireAuth();
 renderLayout(user, "components");
 
-if (user.role !== "VISITANTE") {
+if (["ADMIN", "DOCENTE"].includes(user.role)) {
   document.getElementById("new-component-link").classList.remove("d-none");
 }
 
