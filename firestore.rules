@@ -24,7 +24,7 @@ service cloud.firestore {
     }
 
     function isStaff() {
-      return isActive() && myRole() in ['ADMIN', 'DOCENTE'];
+      return isActive() && myRole() in ['ADMIN', 'DOCENTE', 'ALUNO'];
     }
 
     /* ---------------- USERS ---------------- */
