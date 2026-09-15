@@ -7,7 +7,7 @@ import { escapeHtml, debounce, showSuccess, showError, formatDate, TOOL_CONDITIO
 const user = await requireAuth();
 renderLayout(user, "tools");
 
-const canWrite = ["ADMIN", "DOCENTE"].includes(user.role);
+const canWrite = ["ADMIN", "DOCENTE", "ALUNO"].includes(user.role);
 if (canWrite) document.getElementById("new-tool-btn").classList.remove("d-none");
 
 document.getElementById("tool-condition").innerHTML = TOOL_CONDITIONS.map(
