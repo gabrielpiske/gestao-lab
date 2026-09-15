@@ -105,7 +105,7 @@ async function loadMicrocontrollers() {
 function renderMicroCard(micro, canWrite, isAdmin) {
   const statusInfo = MICROCONTROLLER_STATUS_LABELS[micro.status] || { label: micro.status, badge: "secondary" };
   const familyInfo = MICROCONTROLLER_FAMILIES.find((f) => f.value === micro.family)?.label || micro.family || "Geral";
-  const connInfo = MICROCONTROLLER_CONNECTIVITY.find((c) => c.value === micro.connectivity)?.label || micro.connectivity || "";
+  const conditionInfo = TOOL_CONDITIONS.find((c) => c.value === micro.condition)?.label || micro.condition || "Não informado";
 
   const loanInfo = micro.currentLoan
     ? `<div class="p-2 my-2 rounded bg-body-tertiary border border-subtle">
@@ -153,8 +153,7 @@ function renderMicroCard(micro, canWrite, isAdmin) {
 
   const tags = [];
   if (micro.patrimonio) tags.push(`<span class="badge bg-secondary-subtle text-body border">${escapeHtml(micro.patrimonio)}</span>`);
-  if (micro.voltage) tags.push(`<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">${escapeHtml(micro.voltage)}</span>`);
-  if (connInfo) tags.push(`<span class="badge bg-light text-body border"><i class="bi bi-wifi me-1"></i>${escapeHtml(connInfo)}</span>`);
+  tags.push(`<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle"><i class="bi bi-shield-check me-1"></i>${escapeHtml(conditionInfo)}</span>`);
   if (micro.location) tags.push(`<span class="badge bg-light text-body-secondary border"><i class="bi bi-geo-alt me-1"></i>${escapeHtml(micro.location)}</span>`);
 
   return `
