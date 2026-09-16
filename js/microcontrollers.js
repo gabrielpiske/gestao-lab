@@ -82,7 +82,7 @@ async function loadMicrocontrollers() {
       return;
     }
 
-    grid.innerHTML = list.map((m) => renderMicroCard(m, canWrite, user.role === "ADMIN")).join("");
+    grid.innerHTML = list.map((m) => renderMicroCard(m, canWrite, user.role === "ADMIN", user.uid)).join("");
 
     grid.querySelectorAll("[data-action='borrow']").forEach((btn) =>
       btn.addEventListener("click", () => openLoanModal(btn.dataset.id, btn.dataset.name))
@@ -102,7 +102,7 @@ async function loadMicrocontrollers() {
   }
 }
 
-function renderMicroCard(micro, canWrite, isAdmin) {
+function renderMicroCard(micro, canWrite, isAdmin, currentUserId) {
   const statusInfo = MICROCONTROLLER_STATUS_LABELS[micro.status] || { label: micro.status, badge: "secondary" };
   const familyInfo = MICROCONTROLLER_FAMILIES.find((f) => f.value === micro.family)?.label || micro.family || "Geral";
   const conditionInfo = TOOL_CONDITIONS.find((c) => c.value === micro.condition)?.label || micro.condition || "Não informado";
@@ -128,7 +128,7 @@ function renderMicroCard(micro, canWrite, isAdmin) {
           <i class="bi bi-box-arrow-up-right me-1"></i> Emprestar
         </button>`
       );
-    } else if (micro.status === "EMPRESTADA" && micro.currentLoan) {
+    } else if (micro.status === "EMPRESTADA" && micro.currentLoan && (isAdmin || micro.currentLoan.userId === currentUserId)) {
       actionBtns.push(
         `<button class="btn btn-sm btn-outline-success" data-action="return" data-id="${micro.id}" data-loan-id="${micro.currentLoan.loanId}">
           <i class="bi bi-check2-circle me-1"></i> Registrar devolução
