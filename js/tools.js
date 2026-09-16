@@ -38,7 +38,7 @@ async function loadTools() {
       return;
     }
 
-    grid.innerHTML = tools.map((tool) => renderToolCard(tool, canWrite)).join("");
+    grid.innerHTML = tools.map((tool) => renderToolCard(tool, canWrite, user.uid, user.role === "ADMIN")).join("");
 
     grid.querySelectorAll("[data-action='borrow']").forEach((btn) =>
       btn.addEventListener("click", () => openLoanModal(btn.dataset.id, btn.dataset.name))
@@ -52,7 +52,7 @@ async function loadTools() {
   }
 }
 
-function renderToolCard(tool, canWrite) {
+function renderToolCard(tool, canWrite, currentUserId, isAdmin) {
   const statusInfo = TOOL_STATUS_LABELS[tool.status] || { label: tool.status, badge: "secondary" };
   const loanInfo = tool.currentLoan
     ? `<p class="small text-body-secondary mb-2">
@@ -65,7 +65,7 @@ function renderToolCard(tool, canWrite) {
   if (canWrite) {
     if (tool.status === "DISPONIVEL") {
       actionBtn = `<button class="btn btn-sm btn-primary" data-action="borrow" data-id="${tool.id}" data-name="${escapeHtml(tool.name)}">Emprestar</button>`;
-    } else if (tool.status === "EMPRESTADA" && tool.currentLoan) {
+    } else if (tool.status === "EMPRESTADA" && tool.currentLoan && (isAdmin || tool.currentLoan.userId === currentUserId)) {
       actionBtn = `<button class="btn btn-sm btn-outline-secondary" data-action="return" data-id="${tool.id}" data-loan-id="${tool.currentLoan.loanId}">Registrar devolução</button>`;
     }
   }
