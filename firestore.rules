@@ -75,7 +75,13 @@ service cloud.firestore {
     /* ---------------- TOOLS ---------------- */
     match /tools/{toolId} {
       allow read: if isActive();
-      allow create, update, delete: if isStaff();
+      allow create, delete: if isStaff();
+      // Um equipamento emprestado só pode ser alterado pelo responsável pelo
+      // empréstimo ou por um administrador (inclusive para a devolução).
+      allow update: if isAdmin()
+        || (isStaff()
+            && (resource.data.status != 'EMPRESTADA'
+                || resource.data.currentLoan.userId == request.auth.uid));
     }
 
     /* ---------------- TOOL LOANS ---------------- */
@@ -85,7 +91,8 @@ service cloud.firestore {
       allow create: if isStaff()
           && request.resource.data.userId == request.auth.uid;
 
-      allow update: if isStaff();
+      allow update: if isAdmin()
+        || (isStaff() && resource.data.userId == request.auth.uid);
 
       allow delete: if isAdmin();
     }
@@ -93,7 +100,13 @@ service cloud.firestore {
     /* ---------------- MICROCONTROLLERS ---------------- */
     match /microcontrollers/{microcontrollerId} {
       allow read: if isActive();
-      allow create, update, delete: if isStaff();
+      allow create, delete: if isStaff();
+      // Uma placa emprestada só pode ser alterada pelo responsável pelo
+      // empréstimo ou por um administrador (inclusive para a devolução).
+      allow update: if isAdmin()
+        || (isStaff()
+            && (resource.data.status != 'EMPRESTADA'
+                || resource.data.currentLoan.userId == request.auth.uid));
     }
 
     /* ---------------- MICROCONTROLLER LOANS ---------------- */
@@ -103,7 +116,8 @@ service cloud.firestore {
       allow create: if isStaff()
           && request.resource.data.userId == request.auth.uid;
 
-      allow update: if isStaff();
+      allow update: if isAdmin()
+        || (isStaff() && resource.data.userId == request.auth.uid);
 
       allow delete: if isAdmin();
     }
