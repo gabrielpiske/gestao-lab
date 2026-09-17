@@ -47,6 +47,13 @@ function toJsDate(value) {
   if (!value) return null;
   if (typeof value.toDate === "function") return value.toDate(); // Firestore Timestamp
   if (value instanceof Date) return value;
+  if (typeof value === "string") {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [, y, m, d] = match;
+      return new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0);
+    }
+  }
   const parsed = new Date(value);
   return isNaN(parsed.getTime()) ? null : parsed;
 }
