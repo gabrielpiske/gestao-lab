@@ -22,8 +22,24 @@
   </head>
   <body>
     <div id="app-shell">
-      <div style="max-width: 960px">
-        <h1 class="h5 mb-4">Dashboard</h1>
+      <div style="max-width: 1040px">
+        <h1 class="h5 mb-3">Dashboard</h1>
+
+        <!-- Alerta de Empréstimos em Atraso -->
+        <div id="overdue-alert-container" class="mb-4 d-none">
+          <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between p-3 border-danger-subtle rounded-3 mb-0 gap-2">
+            <div class="d-flex align-items-center gap-3">
+              <i class="bi bi-exclamation-octagon-fill fs-3 text-danger"></i>
+              <div>
+                <h6 class="mb-0 fw-bold text-danger" id="overdue-alert-title">Atenção: existem empréstimos em atraso</h6>
+                <p class="small text-danger-emphasis mb-0" id="overdue-alert-desc">Verifique os equipamentos que ultrapassaram a data prevista de devolução.</p>
+              </div>
+            </div>
+            <a href="tools.html" class="btn btn-sm btn-danger px-3 text-nowrap" id="overdue-alert-link">
+              Verificar Pendências <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
 
         <div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-lg-5">
           <div class="col">
@@ -69,17 +85,25 @@
         </div>
 
         <div class="row g-3">
-          <div class="col-12 col-lg-6">
-            <div class="lt-card p-3">
-              <p class="fw-medium small mb-3">Estoque crítico</p>
+          <div class="col-12 col-lg-4">
+            <div class="lt-card p-3 h-100">
+              <p class="fw-medium small mb-3"><i class="bi bi-clock-history me-1 text-primary"></i> Empréstimos em Aberto</p>
+              <div id="active-loans-list" class="d-flex flex-column gap-2">
+                <p class="text-body-secondary small">Carregando...</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-4">
+            <div class="lt-card p-3 h-100">
+              <p class="fw-medium small mb-3"><i class="bi bi-exclamation-triangle me-1 text-danger"></i> Estoque crítico</p>
               <div id="critical-list" class="d-flex flex-column gap-2">
                 <p class="text-body-secondary small">Carregando...</p>
               </div>
             </div>
           </div>
-          <div class="col-12 col-lg-6">
-            <div class="lt-card p-3">
-              <p class="fw-medium small mb-3">Últimas movimentações</p>
+          <div class="col-12 col-lg-4">
+            <div class="lt-card p-3 h-100">
+              <p class="fw-medium small mb-3"><i class="bi bi-activity me-1 text-success"></i> Últimas movimentações</p>
               <div id="recent-movements-list" class="d-flex flex-column gap-2">
                 <p class="text-body-secondary small">Carregando...</p>
               </div>
