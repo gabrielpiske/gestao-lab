@@ -32,7 +32,7 @@ export function renderLayout(user, activePageKey) {
   const adminLink =
     user.role === "ADMIN"
       ? `<a href="${ADMIN_ITEM.href}" class="nav-link ${
-          ["admin", "admin-users"].includes(activePageKey) ? "active" : ""
+          ["admin", "admin-users", "admin-history"].includes(activePageKey) ? "active" : ""
         }"><i class="bi ${ADMIN_ITEM.icon}"></i> ${ADMIN_ITEM.label}</a>`
       : "";
 

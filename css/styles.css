@@ -291,3 +291,15 @@ body {
 .table {
   transition: all .25s ease;
 }
+
+/* ====================================================
+   AUDITORIA E HUB
+==================================================== */
+
+.audit-row:hover td {
+  background-color: var(--lt-hover) !important;
+}
+
+.avatar-circle {
+  flex-shrink: 0;
+}

@@ -456,6 +456,297 @@ export async function updateUser(uidToUpdate, patch) {
   await updateDoc(doc(db, "users", uidToUpdate), patch);
 }
 
+/* ============================== HISTÓRICO & AUDITORIA (ADMIN) ============================== */
+
+export async function listAllToolLoans(max = 100) {
+  const snap = await getDocs(
+    query(toolLoansCol, orderBy("borrowedAt", "desc"), fsLimit(max))
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function listAllMicrocontrollerLoans(max = 100) {
+  const snap = await getDocs(
+    query(microcontrollerLoansCol, orderBy("borrowedAt", "desc"), fsLimit(max))
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * Retorna contagens agregadas diretamente do Firestore para os KPIs de auditoria,
+ * sem baixar documentos inteiros (economia de rede e leituras).
+ */
+export async function adminAuditSummary() {
+  const [
+    totalMovements,
+    totalToolLoans,
+    activeToolLoans,
+    totalMicroLoans,
+    activeMicroLoans,
+    totalUsers,
+  ] = await Promise.all([
+    getCountFromServer(movementsCol),
+    getCountFromServer(toolLoansCol),
+    getCountFromServer(query(toolLoansCol, where("returnedAt", "==", null))),
+    getCountFromServer(microcontrollerLoansCol),
+    getCountFromServer(query(microcontrollerLoansCol, where("returnedAt", "==", null))),
+    getCountFromServer(usersCol),
+  ]);
+
+  const activeToolCount = activeToolLoans.data().count;
+  const activeMicroCount = activeMicroLoans.data().count;
+  const toolCount = totalToolLoans.data().count;
+  const microCount = totalMicroLoans.data().count;
+
+  return {
+    totalMovementsCount: totalMovements.data().count,
+    totalToolLoansCount: toolCount,
+    activeToolLoansCount: activeToolCount,
+    totalMicroLoansCount: microCount,
+    activeMicroLoansCount: activeMicroCount,
+    totalLoansCount: toolCount + microCount,
+    activeLoansCount: activeToolCount + activeMicroCount,
+    totalUsersCount: totalUsers.data().count,
+  };
+}
+
+/**
+ * Carrega a trilha unificada de auditoria (movimentações, empréstimos de ferramentas
+ * e empréstimos de microcontroladores) e compila as estatísticas por usuário.
+ */
+export async function loadUnifiedAuditData(limitPerType = 150) {
+  const [movements, toolLoans, microLoans, users] = await Promise.all([
+    listRecentMovements(limitPerType),
+    listAllToolLoans(limitPerType),
+    listAllMicrocontrollerLoans(limitPerType),
+    listUsers(),
+  ]);
+
+  const unifiedList = [];
+  const now = new Date();
+
+  // 1. Processar movimentações de estoque
+  for (const m of movements) {
+    const occurredDate = m.occurredAt?.toDate ? m.occurredAt.toDate() : (m.occurredAt ? new Date(m.occurredAt) : null);
+    unifiedList.push({
+      id: m.id,
+      sourceType: "MOVEMENT",
+      sourceLabel: "Movimentação de Estoque",
+      icon: "bi-box-seam",
+      badgeClass: m.type === "ENTRADA" ? "success" : "danger",
+      itemTitle: m.componentTypeName || "Componente",
+      itemSubtitle: m.componentInternalCode ? `Cód: ${m.componentInternalCode}` : "",
+      userId: m.userId,
+      userName: m.userName || "Usuário não identificado",
+      eventDate: occurredDate,
+      actionLabel: m.type === "ENTRADA" ? "Entrada" : "Saída",
+      actionType: m.type,
+      status: m.type,
+      statusLabel: m.type === "ENTRADA" ? "Entrada" : "Saída",
+      statusBadge: m.type === "ENTRADA" ? "success" : "danger",
+      quantity: m.quantity || 0,
+      reason: m.reason || "",
+      notes: m.notes || "",
+      expectedReturnAt: null,
+      returnedAt: null,
+      isOverdue: false,
+      raw: m,
+    });
+  }
+
+  // 2. Processar empréstimos de ferramentas
+  for (const tl of toolLoans) {
+    const borrowedDate = tl.borrowedAt?.toDate ? tl.borrowedAt.toDate() : (tl.borrowedAt ? new Date(tl.borrowedAt) : null);
+    const expectedReturnDate = tl.expectedReturnAt?.toDate ? tl.expectedReturnAt.toDate() : (tl.expectedReturnAt ? new Date(tl.expectedReturnAt) : null);
+    const returnedDate = tl.returnedAt?.toDate ? tl.returnedAt.toDate() : (tl.returnedAt ? new Date(tl.returnedAt) : null);
+
+    const isReturned = !!returnedDate;
+    const isOverdue = !isReturned && expectedReturnDate && expectedReturnDate < now;
+
+    let statusLabel = "Em aberto";
+    let statusBadge = "primary";
+    let statusKey = "EM_ABERTO";
+
+    if (isReturned) {
+      statusLabel = "Devolvido";
+      statusBadge = "secondary";
+      statusKey = "DEVOLVIDO";
+    } else if (isOverdue) {
+      statusLabel = "Em atraso";
+      statusBadge = "danger";
+      statusKey = "ATRASADO";
+    }
+
+    unifiedList.push({
+      id: tl.id,
+      sourceType: "TOOL_LOAN",
+      sourceLabel: "Ferramenta / Equipamento",
+      icon: "bi-tools",
+      badgeClass: "info",
+      itemTitle: tl.toolName || "Ferramenta",
+      itemSubtitle: "Empréstimo de equipamento",
+      userId: tl.userId,
+      userName: tl.userName || "Usuário não identificado",
+      eventDate: borrowedDate,
+      actionLabel: isReturned ? "Devolução realizada" : "Empréstimo ativo",
+      actionType: "EMPRESTIMO",
+      status: statusKey,
+      statusLabel,
+      statusBadge,
+      quantity: 1,
+      reason: "Empréstimo",
+      notes: tl.notes || "",
+      expectedReturnAt: expectedReturnDate,
+      returnedAt: returnedDate,
+      isOverdue,
+      raw: tl,
+    });
+  }
+
+  // 3. Processar empréstimos de microcontroladores
+  for (const ml of microLoans) {
+    const borrowedDate = ml.borrowedAt?.toDate ? ml.borrowedAt.toDate() : (ml.borrowedAt ? new Date(ml.borrowedAt) : null);
+    const expectedReturnDate = ml.expectedReturnAt?.toDate ? ml.expectedReturnAt.toDate() : (ml.expectedReturnAt ? new Date(ml.expectedReturnAt) : null);
+    const returnedDate = ml.returnedAt?.toDate ? ml.returnedAt.toDate() : (ml.returnedAt ? new Date(ml.returnedAt) : null);
+
+    const isReturned = !!returnedDate;
+    const isOverdue = !isReturned && expectedReturnDate && expectedReturnDate < now;
+
+    let statusLabel = "Em aberto";
+    let statusBadge = "primary";
+    let statusKey = "EM_ABERTO";
+
+    if (isReturned) {
+      statusLabel = "Devolvido";
+      statusBadge = "secondary";
+      statusKey = "DEVOLVIDO";
+    } else if (isOverdue) {
+      statusLabel = "Em atraso";
+      statusBadge = "danger";
+      statusKey = "ATRASADO";
+    }
+
+    unifiedList.push({
+      id: ml.id,
+      sourceType: "MICRO_LOAN",
+      sourceLabel: "Microcontrolador / Placa",
+      icon: "bi-motherboard",
+      badgeClass: "warning",
+      itemTitle: ml.microcontrollerName || "Microcontrolador",
+      itemSubtitle: "Empréstimo de placa/kit",
+      userId: ml.userId,
+      userName: ml.userName || "Usuário não identificado",
+      eventDate: borrowedDate,
+      actionLabel: isReturned ? "Devolução realizada" : "Empréstimo ativo",
+      actionType: "EMPRESTIMO",
+      status: statusKey,
+      statusLabel,
+      statusBadge,
+      quantity: 1,
+      reason: "Empréstimo",
+      notes: ml.notes || "",
+      expectedReturnAt: expectedReturnDate,
+      returnedAt: returnedDate,
+      isOverdue,
+      raw: ml,
+    });
+  }
+
+  // Ordenar tudo por data descrescente (mais recente primeiro)
+  unifiedList.sort((a, b) => {
+    const timeA = a.eventDate ? a.eventDate.getTime() : 0;
+    const timeB = b.eventDate ? b.eventDate.getTime() : 0;
+    return timeB - timeA;
+  });
+
+  // 4. Compilar estatísticas consolidadas por usuário (Hub)
+  const userMap = new Map();
+
+  for (const u of users) {
+    userMap.set(u.uid, {
+      uid: u.uid,
+      name: u.name || "Sem nome",
+      email: u.email || "",
+      role: u.role || "VISITANTE",
+      active: u.active !== false,
+      toolLoansCount: 0,
+      microLoansCount: 0,
+      totalLoansCount: 0,
+      activeLoansCount: 0,
+      returnedLoansCount: 0,
+      overdueLoansCount: 0,
+      movementsCount: 0,
+      lastActivityAt: null,
+    });
+  }
+
+  for (const item of unifiedList) {
+    if (!item.userId) continue;
+
+    let userStat = userMap.get(item.userId);
+    if (!userStat) {
+      userStat = {
+        uid: item.userId,
+        name: item.userName || "Usuário removido",
+        email: "",
+        role: "VISITANTE",
+        active: true,
+        toolLoansCount: 0,
+        microLoansCount: 0,
+        totalLoansCount: 0,
+        activeLoansCount: 0,
+        returnedLoansCount: 0,
+        overdueLoansCount: 0,
+        movementsCount: 0,
+        lastActivityAt: null,
+      };
+      userMap.set(item.userId, userStat);
+    }
+
+    if (!userStat.lastActivityAt && item.eventDate) {
+      userStat.lastActivityAt = item.eventDate;
+    }
+
+    if (item.sourceType === "MOVEMENT") {
+      userStat.movementsCount += 1;
+    } else if (item.sourceType === "TOOL_LOAN") {
+      userStat.toolLoansCount += 1;
+      userStat.totalLoansCount += 1;
+      if (item.status === "DEVOLVIDO") userStat.returnedLoansCount += 1;
+      else if (item.status === "ATRASADO") {
+        userStat.activeLoansCount += 1;
+        userStat.overdueLoansCount += 1;
+      } else {
+        userStat.activeLoansCount += 1;
+      }
+    } else if (item.sourceType === "MICRO_LOAN") {
+      userStat.microLoansCount += 1;
+      userStat.totalLoansCount += 1;
+      if (item.status === "DEVOLVIDO") userStat.returnedLoansCount += 1;
+      else if (item.status === "ATRASADO") {
+        userStat.activeLoansCount += 1;
+        userStat.overdueLoansCount += 1;
+      } else {
+        userStat.activeLoansCount += 1;
+      }
+    }
+  }
+
+  const userStatsList = Array.from(userMap.values());
+  // Ordenar usuários por quem tem mais reservas/atividades
+  userStatsList.sort((a, b) => {
+    if (b.totalLoansCount !== a.totalLoansCount) return b.totalLoansCount - a.totalLoansCount;
+    if (b.movementsCount !== a.movementsCount) return b.movementsCount - a.movementsCount;
+    return a.name.localeCompare(b.name);
+  });
+
+  return {
+    history: unifiedList,
+    userStats: userStatsList,
+    users,
+  };
+}
+
 /* ============================== DASHBOARD ============================== */
 
 export async function dashboardSummary() {
@@ -508,4 +799,5 @@ function normalize(text) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 }
+
 
