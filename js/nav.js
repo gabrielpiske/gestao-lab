@@ -46,7 +46,7 @@ export function renderLayout(user, activePageKey) {
               <i class="bi bi-cpu-fill text-primary fs-4"></i>
               <span class="fw-bold fs-5 tracking-wide">LabTrack</span>
             </div>
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill" style="font-size: 0.65rem;">v1.2</span>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill" style="font-size: 0.65rem;">v1.7</span>
           </div>
           <div class="mt-2 ps-1">
             <p class="small fw-semibold mb-0 text-body" style="font-size: 0.85rem;">Gabriel Piske</p>
@@ -138,4 +138,4 @@ document.addEventListener("hidden.bs.modal", () => {
     document.body.style.removeProperty("overflow");
     document.body.style.removeProperty("padding-right");
   }
-});
+});
