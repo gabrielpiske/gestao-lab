@@ -154,7 +154,7 @@ function renderMicroCard(micro, canWrite, isAdmin, currentUserId) {
   const tags = [];
   if (micro.patrimonio) tags.push(`<span class="badge bg-secondary-subtle text-body border">${escapeHtml(micro.patrimonio)}</span>`);
   tags.push(`<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle"><i class="bi bi-shield-check me-1"></i>${escapeHtml(conditionInfo)}</span>`);
-  if (micro.location) tags.push(`<span class="badge bg-light text-body-secondary border"><i class="bi bi-geo-alt me-1"></i>${escapeHtml(micro.location)}</span>`);
+  if (micro.location) tags.push(`<span class="badge bg-secondary-subtle text-body border"><i class="bi bi-geo-alt me-1"></i>${escapeHtml(micro.location)}</span>`);
 
   return `
     <div class="col-12 col-md-6">
