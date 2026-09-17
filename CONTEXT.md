@@ -37,6 +37,7 @@ gestao-lab/
 ├── search.html                # Busca global
 ├── admin-users.html           # Administração de usuários
 ├── admin-types.html           # Tipos e atributos de componentes
+├── admin-history.html         # Histórico global, auditoria e hub de reservas
 ├── js/
 │   ├── firebase-config.js     # Inicialização Firebase e emuladores
 │   ├── auth-guard.js          # Sessão, perfil e redirecionamentos

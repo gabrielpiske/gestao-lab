@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administração — Histórico & Auditoria — LabTrack</title>
+  <script>document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('labtrack_theme') || 'dark');</script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div id="app-shell">
+    <div style="max-width: 1100px;">
+      <!-- Abas da Administração -->
+      <ul class="nav nav-tabs mb-4">
+        <li class="nav-item"><a class="nav-link" href="admin-types.html">Tipos de componente</a></li>
+        <li class="nav-item"><a class="nav-link" href="admin-users.html">Usuários</a></li>
+        <li class="nav-item"><a class="nav-link active" href="admin-history.html">Histórico & Auditoria</a></li>
+      </ul>
+
+      <!-- Cabeçalho -->
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+          <h1 class="h5 mb-1">Histórico Global & Auditoria</h1>
+          <p class="small text-body-secondary mb-0">
+            Registro detalhado de todas as alterações, movimentações de estoque e reservas de equipamentos e microcontroladores.
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <button id="refresh-btn" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise"></i> Atualizar
+          </button>
+          <button id="export-csv-btn" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-download"></i> Exportar CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Cards de Métricas / KPIs -->
+      <div class="row g-3 mb-4" id="audit-kpi-row">
+        <div class="col-6 col-lg-3">
+          <div class="lt-card p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="small text-body-secondary mb-1">Total Movimentações</p>
+                <h3 class="h4 mb-0 fw-bold" id="kpi-movements">—</h3>
+              </div>
+              <div class="p-2 bg-primary-subtle text-primary rounded-3 fs-4">
+                <i class="bi bi-box-seam"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="lt-card p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="small text-body-secondary mb-1">Total de Reservas</p>
+                <h3 class="h4 mb-0 fw-bold" id="kpi-loans">—</h3>
+              </div>
+              <div class="p-2 bg-info-subtle text-info rounded-3 fs-4">
+                <i class="bi bi-journal-bookmark"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="lt-card p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="small text-body-secondary mb-1">Reservas Ativas</p>
+                <h3 class="h4 mb-0 fw-bold text-primary" id="kpi-active-loans">—</h3>
+              </div>
+              <div class="p-2 bg-primary-subtle text-primary rounded-3 fs-4">
+                <i class="bi bi-clock-history"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="lt-card p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <p class="small text-body-secondary mb-1">Usuários com Registros</p>
+                <h3 class="h4 mb-0 fw-bold" id="kpi-users">—</h3>
+              </div>
+              <div class="p-2 bg-success-subtle text-success rounded-3 fs-4">
+                <i class="bi bi-people"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navegação Interna do Módulo (Pills) -->
+      <ul class="nav nav-pills mb-3 gap-2" id="audit-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active btn-sm" id="tab-timeline-btn" data-bs-toggle="pill" data-bs-target="#tab-timeline" type="button" role="tab">
+            <i class="bi bi-clock-history me-1"></i> Trilha de Alterações & Histórico
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link btn-sm" id="tab-users-btn" data-bs-toggle="pill" data-bs-target="#tab-users" type="button" role="tab">
+            <i class="bi bi-person-lines-fill me-1"></i> Hub de Usuários & Reservas
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <!-- ABA 1: TRILHA DE AUDITORIA & HISTÓRICO -->
+        <div class="tab-pane fade show active" id="tab-timeline" role="tabpanel">
+          <div class="lt-card p-3 mb-3">
+            <!-- Barra de Filtros -->
+            <div class="row g-2 align-items-center">
+              <div class="col-12 col-md-4">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-transparent"><i class="bi bi-search"></i></span>
+                  <input
+                    type="text"
+                    id="search-input"
+                    class="form-control"
+                    placeholder="Buscar por usuário, componente, ferramenta..."
+                  />
+                  <button id="clear-search-btn" class="btn btn-outline-secondary d-none" type="button" title="Limpar busca">
+                    <i class="bi bi-x"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <select id="filter-source" class="form-select form-select-sm">
+                  <option value="">Todos os tipos de alteração</option>
+                  <option value="MOVEMENT">Movimentações de Estoque</option>
+                  <option value="TOOL_LOAN">Reservas de Ferramentas</option>
+                  <option value="MICRO_LOAN">Reservas de Microcontroladores</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-3">
+                <select id="filter-status" class="form-select form-select-sm">
+                  <option value="">Todos os status</option>
+                  <option value="EM_ABERTO">Em aberto (Ativo)</option>
+                  <option value="ATRASADO">Em atraso</option>
+                  <option value="DEVOLVIDO">Devolvido</option>
+                  <option value="ENTRADA">Entrada no Estoque</option>
+                  <option value="SAIDA">Saída do Estoque</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-2">
+                <select id="filter-period" class="form-select form-select-sm">
+                  <option value="">Todo o período</option>
+                  <option value="TODAY">Hoje</option>
+                  <option value="7D">Últimos 7 dias</option>
+                  <option value="30D">Últimos 30 dias</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Filtro ativo de usuário (quando clicado via Hub) -->
+            <div id="active-user-filter-badge" class="mt-2 d-none">
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle p-2">
+                <i class="bi bi-funnel-fill me-1"></i> Filtrando por usuário: <strong id="filter-user-name"></strong>
+                <button type="button" id="remove-user-filter-btn" class="btn-close ms-2" style="font-size: 0.65rem;" aria-label="Remover"></button>
+              </span>
+            </div>
+          </div>
+
+          <!-- Tabela de Auditoria -->
+          <div class="lt-card overflow-hidden">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0 align-middle">
+                <thead>
+                  <tr class="small text-body-secondary border-bottom">
+                    <th class="ps-3 py-2">Evento / Origem</th>
+                    <th class="py-2">Item / Componente</th>
+                    <th class="py-2">Ação & Status</th>
+                    <th class="py-2">Qtd / Detalhes</th>
+                    <th class="py-2">Usuário</th>
+                    <th class="pe-3 py-2 text-end">Data / Horário</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-tbody">
+                  <tr>
+                    <td class="ps-3 py-4 text-body-secondary small" colspan="6">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span>Carregando trilha de auditoria...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Rodapé da tabela com paginação/contador -->
+            <div class="p-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <span class="small text-body-secondary" id="audit-results-count">Exibindo registros</span>
+              <div class="d-flex gap-2 align-items-center">
+                <button id="prev-page-btn" class="btn btn-sm btn-outline-secondary" disabled>Anterior</button>
+                <span class="small align-self-center px-2" id="page-indicator">1 / 1</span>
+                <button id="next-page-btn" class="btn btn-sm btn-outline-secondary" disabled>Próxima</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 2: HUB DE USUÁRIOS & RESERVAS -->
+        <div class="tab-pane fade" id="tab-users" role="tabpanel">
+          <div class="lt-card p-3 mb-3">
+            <div class="row g-2 align-items-center">
+              <div class="col-12 col-md-6">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-transparent"><i class="bi bi-search"></i></span>
+                  <input
+                    type="text"
+                    id="search-hub-user"
+                    class="form-control"
+                    placeholder="Buscar usuário no hub (nome, email)..."
+                  />
+                </div>
+              </div>
+              <div class="col-12 col-md-6 text-md-end small text-body-secondary">
+                <i class="bi bi-info-circle me-1"></i> Clique em <strong>"Ver Histórico"</strong> para filtrar a trilha de auditoria daquele usuário.
+              </div>
+            </div>
+          </div>
+
+          <div class="lt-card overflow-hidden">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0 align-middle">
+                <thead>
+                  <tr class="small text-body-secondary border-bottom">
+                    <th class="ps-3 py-2">Usuário</th>
+                    <th class="py-2">Papel</th>
+                    <th class="py-2 text-center">Total Reservas</th>
+                    <th class="py-2 text-center">Em Aberto</th>
+                    <th class="py-2 text-center">Devolvidos</th>
+                    <th class="py-2 text-center">Movimentações Estoque</th>
+                    <th class="pe-3 py-2 text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="hub-users-tbody">
+                  <tr>
+                    <td class="ps-3 py-4 text-body-secondary small" colspan="7">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span>Carregando estatísticas dos usuários...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Detalhes do Registro -->
+  <div class="modal fade" id="record-detail-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title h6" id="record-modal-title">Detalhes da Alteração</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body small" id="record-modal-body">
+          <!-- Conteúdo dinâmico -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="js/admin-history.js"></script>
+</body>
+</html>
