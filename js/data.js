@@ -804,6 +804,134 @@ export async function listCriticalComponents(max = 8) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
+/**
+ * Retorna todos os empréstimos ativos (ferramentas e microcontroladores)
+ * atualmente sob responsabilidade de um determinado usuário.
+ */
+export async function getMyActiveLoans(userId) {
+  if (!userId) return [];
+  const [tools, microcontrollers] = await Promise.all([
+    listTools({ status: "EMPRESTADA" }),
+    listMicrocontrollers({ status: "EMPRESTADA" }),
+  ]);
+
+  const now = new Date();
+  const myItems = [];
+
+  for (const t of tools) {
+    if (t.currentLoan && t.currentLoan.userId === userId) {
+      const expDate = t.currentLoan.expectedReturnAt?.toDate
+        ? t.currentLoan.expectedReturnAt.toDate()
+        : (t.currentLoan.expectedReturnAt ? new Date(t.currentLoan.expectedReturnAt) : null);
+      const isOverdue = !!(expDate && expDate < now);
+      myItems.push({
+        id: t.id,
+        loanId: t.currentLoan.loanId,
+        type: "TOOL",
+        typeLabel: "Ferramenta",
+        name: t.name,
+        details: [t.manufacturer, t.model].filter(Boolean).join(" "),
+        icon: "bi-tools",
+        borrowedAt: t.currentLoan.borrowedAt,
+        expectedReturnAt: expDate,
+        isOverdue,
+      });
+    }
+  }
+
+  for (const m of microcontrollers) {
+    if (m.currentLoan && m.currentLoan.userId === userId) {
+      const expDate = m.currentLoan.expectedReturnAt?.toDate
+        ? m.currentLoan.expectedReturnAt.toDate()
+        : (m.currentLoan.expectedReturnAt ? new Date(m.currentLoan.expectedReturnAt) : null);
+      const isOverdue = !!(expDate && expDate < now);
+      myItems.push({
+        id: m.id,
+        loanId: m.currentLoan.loanId,
+        type: "MICROCONTROLLER",
+        typeLabel: "Microcontrolador",
+        name: m.name,
+        details: [m.family, m.model].filter(Boolean).join(" "),
+        icon: "bi-motherboard",
+        borrowedAt: m.currentLoan.borrowedAt,
+        expectedReturnAt: expDate,
+        isOverdue,
+      });
+    }
+  }
+
+  return myItems;
+}
+
+/**
+ * Retorna todos os empréstimos atualmente ativos no laboratório,
+ * identificando quantos e quais estão em atraso.
+ */
+export async function listActiveAndOverdueLoans() {
+  const [tools, microcontrollers] = await Promise.all([
+    listTools({ status: "EMPRESTADA" }),
+    listMicrocontrollers({ status: "EMPRESTADA" }),
+  ]);
+
+  const now = new Date();
+  const activeList = [];
+
+  for (const t of tools) {
+    if (t.currentLoan) {
+      const expDate = t.currentLoan.expectedReturnAt?.toDate
+        ? t.currentLoan.expectedReturnAt.toDate()
+        : (t.currentLoan.expectedReturnAt ? new Date(t.currentLoan.expectedReturnAt) : null);
+      const isOverdue = !!(expDate && expDate < now);
+      activeList.push({
+        itemId: t.id,
+        loanId: t.currentLoan.loanId,
+        itemType: "TOOL",
+        itemTypeName: "Ferramenta",
+        name: t.name,
+        icon: "bi-tools",
+        userId: t.currentLoan.userId,
+        userName: t.currentLoan.userName,
+        borrowedAt: t.currentLoan.borrowedAt,
+        expectedReturnAt: expDate,
+        isOverdue,
+      });
+    }
+  }
+
+  for (const m of microcontrollers) {
+    if (m.currentLoan) {
+      const expDate = m.currentLoan.expectedReturnAt?.toDate
+        ? m.currentLoan.expectedReturnAt.toDate()
+        : (m.currentLoan.expectedReturnAt ? new Date(m.currentLoan.expectedReturnAt) : null);
+      const isOverdue = !!(expDate && expDate < now);
+      activeList.push({
+        itemId: m.id,
+        loanId: m.currentLoan.loanId,
+        itemType: "MICROCONTROLLER",
+        itemTypeName: "Microcontrolador",
+        name: m.name,
+        icon: "bi-motherboard",
+        userId: m.currentLoan.userId,
+        userName: m.currentLoan.userName,
+        borrowedAt: m.currentLoan.borrowedAt,
+        expectedReturnAt: expDate,
+        isOverdue,
+      });
+    }
+  }
+
+  // Ordenar atrasados primeiro, depois por data mais antiga
+  activeList.sort((a, b) => {
+    if (a.isOverdue && !b.isOverdue) return -1;
+    if (!a.isOverdue && b.isOverdue) return 1;
+    const timeA = a.expectedReturnAt ? a.expectedReturnAt.getTime() : 0;
+    const timeB = b.expectedReturnAt ? b.expectedReturnAt.getTime() : 0;
+    return timeA - timeB;
+  });
+
+  return activeList;
+}
+
 function sevenDaysAgoTimestamp() {
   const date = new Date();
   date.setDate(date.getDate() - 7);
@@ -830,4 +958,5 @@ function normalize(text) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 }
+
 
