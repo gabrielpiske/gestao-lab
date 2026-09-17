@@ -290,7 +290,8 @@ export async function createLoan(toolId, { expectedReturnAt, notes }, user) {
       throw new Error(`Ferramenta não está disponível (status atual: ${tool.status}).`);
     }
 
-    const expectedReturnTimestamp = expectedReturnAt ? Timestamp.fromDate(new Date(expectedReturnAt)) : null;
+    const parsedDate = parseDateInput(expectedReturnAt);
+    const expectedReturnTimestamp = parsedDate ? Timestamp.fromDate(parsedDate) : null;
 
     const loanData = {
       toolId,
@@ -402,7 +403,8 @@ export async function createMicrocontrollerLoan(microcontrollerId, { expectedRet
       throw new Error(`Microcontrolador não está disponível (status atual: ${micro.status}).`);
     }
 
-    const expectedReturnTimestamp = expectedReturnAt ? Timestamp.fromDate(new Date(expectedReturnAt)) : null;
+    const parsedDate = parseDateInput(expectedReturnAt);
+    const expectedReturnTimestamp = parsedDate ? Timestamp.fromDate(parsedDate) : null;
 
     const loanData = {
       microcontrollerId,
@@ -500,6 +502,20 @@ function sevenDaysAgoTimestamp() {
   const date = new Date();
   date.setDate(date.getDate() - 7);
   return Timestamp.fromDate(date);
+}
+
+function parseDateInput(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === "string") {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [, y, m, d] = match;
+      return new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0);
+    }
+  }
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? null : date;
 }
 
 function normalize(text) {
