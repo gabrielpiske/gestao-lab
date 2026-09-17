@@ -482,21 +482,21 @@ export async function adminAuditSummary() {
   const [
     totalMovements,
     totalToolLoans,
-    activeToolLoans,
+    activeTools,
     totalMicroLoans,
-    activeMicroLoans,
+    activeMicros,
     totalUsers,
   ] = await Promise.all([
     getCountFromServer(movementsCol),
     getCountFromServer(toolLoansCol),
-    getCountFromServer(query(toolLoansCol, where("returnedAt", "==", null))),
+    getCountFromServer(query(toolsCol, where("status", "==", "EMPRESTADA"))),
     getCountFromServer(microcontrollerLoansCol),
-    getCountFromServer(query(microcontrollerLoansCol, where("returnedAt", "==", null))),
+    getCountFromServer(query(microcontrollersCol, where("status", "==", "EMPRESTADA"))),
     getCountFromServer(usersCol),
   ]);
 
-  const activeToolCount = activeToolLoans.data().count;
-  const activeMicroCount = activeMicroLoans.data().count;
+  const activeToolCount = activeTools.data().count;
+  const activeMicroCount = activeMicros.data().count;
   const toolCount = totalToolLoans.data().count;
   const microCount = totalMicroLoans.data().count;
 
@@ -517,12 +517,17 @@ export async function adminAuditSummary() {
  * e empréstimos de microcontroladores) e compila as estatísticas por usuário.
  */
 export async function loadUnifiedAuditData(limitPerType = 150) {
-  const [movements, toolLoans, microLoans, users] = await Promise.all([
+  const [movements, toolLoans, microLoans, users, tools, microcontrollers] = await Promise.all([
     listRecentMovements(limitPerType),
     listAllToolLoans(limitPerType),
     listAllMicrocontrollerLoans(limitPerType),
     listUsers(),
+    listTools(),
+    listMicrocontrollers(),
   ]);
+
+  const toolsMap = new Map(tools.map((t) => [t.id, t]));
+  const microsMap = new Map(microcontrollers.map((m) => [m.id, m]));
 
   const unifiedList = [];
   const now = new Date();
@@ -562,8 +567,13 @@ export async function loadUnifiedAuditData(limitPerType = 150) {
     const expectedReturnDate = tl.expectedReturnAt?.toDate ? tl.expectedReturnAt.toDate() : (tl.expectedReturnAt ? new Date(tl.expectedReturnAt) : null);
     const returnedDate = tl.returnedAt?.toDate ? tl.returnedAt.toDate() : (tl.returnedAt ? new Date(tl.returnedAt) : null);
 
-    const isReturned = !!returnedDate;
-    const isOverdue = !isReturned && expectedReturnDate && expectedReturnDate < now;
+    const correspondingTool = toolsMap.get(tl.toolId);
+    // Um empréstimo é considerado ativo se:
+    // 1. Não tem data de devolução registrada
+    // 2. E a ferramenta correspondente está atualmente marcada como 'EMPRESTADA' com este empréstimo ativo
+    const isActuallyActive = !returnedDate && correspondingTool?.status === "EMPRESTADA" && correspondingTool?.currentLoan?.loanId === tl.id;
+    const isReturned = !!returnedDate || !isActuallyActive;
+    const isOverdue = isActuallyActive && expectedReturnDate && expectedReturnDate < now;
 
     let statusLabel = "Em aberto";
     let statusBadge = "primary";
@@ -585,7 +595,7 @@ export async function loadUnifiedAuditData(limitPerType = 150) {
       sourceLabel: "Ferramenta / Equipamento",
       icon: "bi-tools",
       badgeClass: "info",
-      itemTitle: tl.toolName || "Ferramenta",
+      itemTitle: tl.toolName || correspondingTool?.name || "Ferramenta",
       itemSubtitle: "Empréstimo de equipamento",
       userId: tl.userId,
       userName: tl.userName || "Usuário não identificado",
@@ -599,7 +609,7 @@ export async function loadUnifiedAuditData(limitPerType = 150) {
       reason: "Empréstimo",
       notes: tl.notes || "",
       expectedReturnAt: expectedReturnDate,
-      returnedAt: returnedDate,
+      returnedAt: returnedDate || (isReturned ? (expectedReturnDate || borrowedDate) : null),
       isOverdue,
       raw: tl,
     });
@@ -611,8 +621,13 @@ export async function loadUnifiedAuditData(limitPerType = 150) {
     const expectedReturnDate = ml.expectedReturnAt?.toDate ? ml.expectedReturnAt.toDate() : (ml.expectedReturnAt ? new Date(ml.expectedReturnAt) : null);
     const returnedDate = ml.returnedAt?.toDate ? ml.returnedAt.toDate() : (ml.returnedAt ? new Date(ml.returnedAt) : null);
 
-    const isReturned = !!returnedDate;
-    const isOverdue = !isReturned && expectedReturnDate && expectedReturnDate < now;
+    const correspondingMicro = microsMap.get(ml.microcontrollerId);
+    // Um empréstimo é considerado ativo se:
+    // 1. Não tem data de devolução registrada
+    // 2. E o microcontrolador correspondente está atualmente marcado como 'EMPRESTADA' com este empréstimo ativo
+    const isActuallyActive = !returnedDate && correspondingMicro?.status === "EMPRESTADA" && correspondingMicro?.currentLoan?.loanId === ml.id;
+    const isReturned = !!returnedDate || !isActuallyActive;
+    const isOverdue = isActuallyActive && expectedReturnDate && expectedReturnDate < now;
 
     let statusLabel = "Em aberto";
     let statusBadge = "primary";
@@ -634,7 +649,7 @@ export async function loadUnifiedAuditData(limitPerType = 150) {
       sourceLabel: "Microcontrolador / Placa",
       icon: "bi-motherboard",
       badgeClass: "warning",
-      itemTitle: ml.microcontrollerName || "Microcontrolador",
+      itemTitle: ml.microcontrollerName || correspondingMicro?.name || "Microcontrolador",
       itemSubtitle: "Empréstimo de placa/kit",
       userId: ml.userId,
       userName: ml.userName || "Usuário não identificado",
@@ -648,7 +663,7 @@ export async function loadUnifiedAuditData(limitPerType = 150) {
       reason: "Empréstimo",
       notes: ml.notes || "",
       expectedReturnAt: expectedReturnDate,
-      returnedAt: returnedDate,
+      returnedAt: returnedDate || (isReturned ? (expectedReturnDate || borrowedDate) : null),
       isOverdue,
       raw: ml,
     });

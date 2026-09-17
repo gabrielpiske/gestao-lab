@@ -426,8 +426,8 @@ function renderAuditTablePage() {
             ${
               item.sourceType === "MOVEMENT"
                 ? `<strong>${item.quantity} un.</strong> <span class="text-body-secondary">(${escapeHtml(reasonLabels[item.reason] || item.reason)})</span>`
-                : item.returnedAt
-                ? `<span class="text-success"><i class="bi bi-check2 me-1"></i>Devolvido em ${formatDate(item.returnedAt)}</span>`
+                : item.status === "DEVOLVIDO"
+                ? `<span class="text-success"><i class="bi bi-check2 me-1"></i>Devolvido${item.returnedAt ? ` em ${formatDate(item.returnedAt)}` : ""}</span>`
                 : item.isOverdue
                 ? `<span class="text-danger"><i class="bi bi-exclamation-octagon me-1"></i>Previsto p/ ${formatDate(item.expectedReturnAt)}</span>`
                 : `<span class="text-primary">Previsto p/ ${formatDate(item.expectedReturnAt)}</span>`
@@ -513,7 +513,7 @@ function openRecordModal(item) {
       </div>
       <div class="list-group-item d-flex justify-content-between px-0">
         <span class="text-body-secondary">Devolução Efetiva:</span>
-        <span>${formatDateTime(item.returnedAt)}</span>
+        <span>${item.returnedAt ? formatDateTime(item.returnedAt) : (item.status === "DEVOLVIDO" ? "Devolvido / Concluído" : "Pendente (Em aberto)")}</span>
       </div>`;
   }
 
