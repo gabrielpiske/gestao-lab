@@ -227,6 +227,214 @@ export async function registerMovement(componentId, { type, reason, quantity, no
   });
 }
 
+/* ============================== RESERVAS E KITS DE COMPONENTES ============================== */
+
+const componentLoansCol = collection(db, "componentLoans");
+const componentKitsCol = collection(db, "componentKits");
+
+/* --- Kits Didáticos (Templates de Aula) --- */
+
+export async function listComponentKits() {
+  const snap = await getDocs(query(componentKitsCol, orderBy("name")));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function createComponentKit({ name, description, items }, user) {
+  return addDoc(componentKitsCol, {
+    name,
+    description: description || "",
+    items: items || [], // array de { componentId, componentTypeName, quantity }
+    createdBy: user.uid,
+    createdByName: user.name,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function deleteComponentKit(id) {
+  await deleteDoc(doc(db, "componentKits", id));
+}
+
+/* --- Empréstimos / Reservas Temporárias de Componentes --- */
+
+export async function listComponentLoans({ status, userId, max = 50 } = {}) {
+  let constraints = [orderBy("borrowedAt", "desc")];
+  if (status) constraints = [where("status", "==", status), ...constraints];
+  if (userId) constraints = [where("userId", "==", userId), ...constraints];
+  if (max) constraints.push(fsLimit(max));
+  const snap = await getDocs(query(componentLoansCol, ...constraints));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function listAllComponentLoans(max = 150) {
+  const snap = await getDocs(query(componentLoansCol, orderBy("borrowedAt", "desc"), fsLimit(max)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function getComponentLoan(id) {
+  const snap = await getDoc(doc(db, "componentLoans", id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+/**
+ * Cria uma reserva/empréstimo temporário de componentes para aula/bancada.
+ * Atualiza o saldo reservado (reservedQuantity) de cada componente na mesma transação.
+ */
+export async function createComponentLoan({ benchOrClass, expectedReturnAt, notes, items }, user) {
+  if (!items || items.length === 0) {
+    throw new Error("Selecione ao menos um componente para a reserva.");
+  }
+
+  const loanRef = doc(componentLoansCol);
+  const parsedDate = parseDateInput(expectedReturnAt);
+  const expectedReturnTimestamp = parsedDate ? Timestamp.fromDate(parsedDate) : null;
+
+  await runTransaction(db, async (tx) => {
+    // 1. Ler todos os componentes envolvidos e validar saldo disponível
+    const componentSnaps = await Promise.all(
+      items.map((item) => tx.get(doc(db, "components", item.componentId)))
+    );
+
+    const loanItems = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const snap = componentSnaps[i];
+      if (!snap.exists()) {
+        throw new Error(`Componente ${item.componentId} não encontrado.`);
+      }
+      const component = snap.data();
+      const reserved = component.reservedQuantity || 0;
+      const available = component.quantity - reserved;
+
+      if (available < item.quantity) {
+        throw new Error(
+          `Estoque disponível insuficiente para '${component.componentTypeName}'. Disponível: ${available}, solicitado: ${item.quantity}.`
+        );
+      }
+
+      // Atualiza reservedQuantity do componente
+      tx.update(snap.ref, {
+        reservedQuantity: reserved + item.quantity,
+        updatedAt: serverTimestamp(),
+      });
+
+      loanItems.push({
+        componentId: item.componentId,
+        componentTypeName: component.componentTypeName,
+        componentInternalCode: component.internalCode || null,
+        quantityBorrowed: item.quantity,
+        quantityReturned: 0,
+        quantityDamaged: 0,
+        status: "EM_USO",
+      });
+    }
+
+    // 2. Gravar o empréstimo
+    tx.set(loanRef, {
+      userId: user.uid,
+      userName: user.name,
+      benchOrClass: benchOrClass || "Uso Geral",
+      borrowedAt: serverTimestamp(),
+      expectedReturnAt: expectedReturnTimestamp,
+      returnedAt: null,
+      notes: notes || "",
+      items: loanItems,
+      status: "ATIVO",
+    });
+  });
+
+  return loanRef.id;
+}
+
+/**
+ * Encerra uma reserva de componentes com devolução guiada.
+ * Libera o reservedQuantity e, se houver itens queimados/danificados,
+ * gera automaticamente movimentação de SAÍDA e reduz o estoque físico (quantity).
+ */
+export async function returnComponentLoan(loanId, itemReturns, user) {
+  const loanRef = doc(db, "componentLoans", loanId);
+
+  await runTransaction(db, async (tx) => {
+    const loanSnap = await tx.get(loanRef);
+    if (!loanSnap.exists()) throw new Error("Reserva não encontrada.");
+    const loan = loanSnap.data();
+
+    if (loan.status !== "ATIVO" || loan.returnedAt) {
+      throw new Error("Esta reserva já foi devolvida ou encerrada.");
+    }
+
+    const returnsMap = new Map((itemReturns || []).map((r) => [r.componentId, r]));
+    let totalDamagedInLoan = 0;
+    const updatedLoanItems = [];
+
+    for (const item of loan.items) {
+      const userReturn = returnsMap.get(item.componentId) || {};
+      const returnedQty = Math.max(0, userReturn.quantityReturned ?? item.quantityBorrowed);
+      const damagedQty = Math.max(0, userReturn.quantityDamaged ?? 0);
+      const damageReason = userReturn.damageReason || "AVARIA_AULA";
+
+      if (returnedQty + damagedQty !== item.quantityBorrowed) {
+        throw new Error(
+          `A soma das quantidades devolvidas (${returnedQty}) e danificadas (${damagedQty}) deve ser exatamente igual à quantidade emprestada (${item.quantityBorrowed}) para '${item.componentTypeName}'.`
+        );
+      }
+
+      totalDamagedInLoan += damagedQty;
+
+      // Ler e atualizar o componente
+      const compRef = doc(db, "components", item.componentId);
+      const compSnap = await tx.get(compRef);
+      if (compSnap.exists()) {
+        const comp = compSnap.data();
+        const currentReserved = comp.reservedQuantity || 0;
+        const newReserved = Math.max(0, currentReserved - item.quantityBorrowed);
+        const newQuantity = comp.quantity - damagedQty;
+
+        tx.update(compRef, {
+          reservedQuantity: newReserved,
+          quantity: newQuantity,
+          critical: newQuantity <= comp.minQuantity,
+          updatedAt: serverTimestamp(),
+        });
+
+        // Se houve avaria/perda, registra baixa automática em stockMovements
+        if (damagedQty > 0) {
+          const movementRef = doc(movementsCol);
+          tx.set(movementRef, {
+            componentId: item.componentId,
+            componentTypeName: item.componentTypeName,
+            componentInternalCode: item.componentInternalCode || null,
+            type: "SAIDA",
+            reason: damageReason,
+            quantity: damagedQty,
+            notes: `Baixa automática por avaria/perda no encerramento da reserva ${loanId} (${loan.benchOrClass})`,
+            userId: user.uid,
+            userName: user.name,
+            occurredAt: serverTimestamp(),
+          });
+        }
+      }
+
+      updatedLoanItems.push({
+        ...item,
+        quantityReturned: returnedQty,
+        quantityDamaged: damagedQty,
+        status: damagedQty > 0 ? "DEVOLVIDO_COM_AVARIA" : "DEVOLVIDO_OK",
+      });
+    }
+
+    const finalStatus = totalDamagedInLoan > 0 ? "DEVOLVIDO_COM_PERDAS" : "DEVOLVIDO";
+
+    tx.update(loanRef, {
+      items: updatedLoanItems,
+      returnedAt: serverTimestamp(),
+      returnedByUserId: user.uid,
+      returnedByUserName: user.name,
+      status: finalStatus,
+    });
+  });
+}
+
 /* ============================== FERRAMENTAS ============================== */
 
 const toolsCol = collection(db, "tools");
@@ -517,10 +725,11 @@ export async function adminAuditSummary() {
  * e empréstimos de microcontroladores) e compila as estatísticas por usuário.
  */
 export async function loadUnifiedAuditData(limitPerType = 150) {
-  const [movements, toolLoans, microLoans, users, tools, microcontrollers] = await Promise.all([
+  const [movements, toolLoans, microLoans, compLoans, users, tools, microcontrollers] = await Promise.all([
     listRecentMovements(limitPerType),
     listAllToolLoans(limitPerType),
     listAllMicrocontrollerLoans(limitPerType),
+    listAllComponentLoans(limitPerType),
     listUsers(),
     listTools(),
     listMicrocontrollers(),
@@ -568,9 +777,6 @@ export async function loadUnifiedAuditData(limitPerType = 150) {
     const returnedDate = tl.returnedAt?.toDate ? tl.returnedAt.toDate() : (tl.returnedAt ? new Date(tl.returnedAt) : null);
 
     const correspondingTool = toolsMap.get(tl.toolId);
-    // Um empréstimo é considerado ativo se:
-    // 1. Não tem data de devolução registrada
-    // 2. E a ferramenta correspondente está atualmente marcada como 'EMPRESTADA' com este empréstimo ativo
     const isActuallyActive = !returnedDate && correspondingTool?.status === "EMPRESTADA" && correspondingTool?.currentLoan?.loanId === tl.id;
     const isReturned = !!returnedDate || !isActuallyActive;
     const isOverdue = isActuallyActive && expectedReturnDate && expectedReturnDate < now;
@@ -622,9 +828,6 @@ export async function loadUnifiedAuditData(limitPerType = 150) {
     const returnedDate = ml.returnedAt?.toDate ? ml.returnedAt.toDate() : (ml.returnedAt ? new Date(ml.returnedAt) : null);
 
     const correspondingMicro = microsMap.get(ml.microcontrollerId);
-    // Um empréstimo é considerado ativo se:
-    // 1. Não tem data de devolução registrada
-    // 2. E o microcontrolador correspondente está atualmente marcado como 'EMPRESTADA' com este empréstimo ativo
     const isActuallyActive = !returnedDate && correspondingMicro?.status === "EMPRESTADA" && correspondingMicro?.currentLoan?.loanId === ml.id;
     const isReturned = !!returnedDate || !isActuallyActive;
     const isOverdue = isActuallyActive && expectedReturnDate && expectedReturnDate < now;
@@ -666,6 +869,62 @@ export async function loadUnifiedAuditData(limitPerType = 150) {
       returnedAt: returnedDate || (isReturned ? (expectedReturnDate || borrowedDate) : null),
       isOverdue,
       raw: ml,
+    });
+  }
+
+  // 4. Processar empréstimos de componentes (Reservas de Aula)
+  for (const cl of compLoans) {
+    const borrowedDate = cl.borrowedAt?.toDate ? cl.borrowedAt.toDate() : (cl.borrowedAt ? new Date(cl.borrowedAt) : null);
+    const expectedReturnDate = cl.expectedReturnAt?.toDate ? cl.expectedReturnAt.toDate() : (cl.expectedReturnAt ? new Date(cl.expectedReturnAt) : null);
+    const returnedDate = cl.returnedAt?.toDate ? cl.returnedAt.toDate() : (cl.returnedAt ? new Date(cl.returnedAt) : null);
+
+    const isActuallyActive = cl.status === "ATIVO";
+    const isReturned = !isActuallyActive;
+    const isOverdue = isActuallyActive && expectedReturnDate && expectedReturnDate < now;
+    const totalQty = cl.items ? cl.items.reduce((acc, i) => acc + (i.quantityBorrowed || 0), 0) : 0;
+    const summaryStr = cl.items ? cl.items.map((i) => `${i.quantityBorrowed}x ${i.componentTypeName}`).join(", ") : "";
+
+    let statusLabel = "Em aberto";
+    let statusBadge = "primary";
+    let statusKey = "EM_ABERTO";
+
+    if (cl.status === "DEVOLVIDO") {
+      statusLabel = "Devolvido";
+      statusBadge = "secondary";
+      statusKey = "DEVOLVIDO";
+    } else if (cl.status === "DEVOLVIDO_COM_PERDAS") {
+      statusLabel = "Devolvido c/ Avaria";
+      statusBadge = "warning";
+      statusKey = "DEVOLVIDO";
+    } else if (isOverdue) {
+      statusLabel = "Em atraso";
+      statusBadge = "danger";
+      statusKey = "ATRASADO";
+    }
+
+    unifiedList.push({
+      id: cl.id,
+      sourceType: "COMPONENT_LOAN",
+      sourceLabel: "Reserva de Componentes",
+      icon: "bi-box-seam-fill",
+      badgeClass: "primary",
+      itemTitle: `Reserva: ${cl.benchOrClass || "Aula/Bancada"}`,
+      itemSubtitle: `${totalQty} itens: ${summaryStr}`,
+      userId: cl.userId,
+      userName: cl.userName || "Usuário não identificado",
+      eventDate: borrowedDate,
+      actionLabel: isReturned ? "Reserva encerrada" : "Reserva ativa",
+      actionType: "EMPRESTIMO",
+      status: statusKey,
+      statusLabel,
+      statusBadge,
+      quantity: totalQty,
+      reason: "Reserva de Componentes",
+      notes: cl.notes || "",
+      expectedReturnAt: expectedReturnDate,
+      returnedAt: returnedDate,
+      isOverdue,
+      raw: cl,
     });
   }
 
@@ -776,6 +1035,7 @@ export async function dashboardSummary() {
     totalMicrocontrollers,
     borrowedMicrocontrollers,
     movements7d,
+    activeComponentLoans,
   ] = await Promise.all([
     getCountFromServer(query(componentsCol, where("critical", "==", true))),
     getCountFromServer(query(componentsCol, where("quantity", "==", 0))),
@@ -785,6 +1045,7 @@ export async function dashboardSummary() {
     getCountFromServer(microcontrollersCol),
     getCountFromServer(query(microcontrollersCol, where("status", "==", "EMPRESTADA"))),
     getCountFromServer(query(movementsCol, where("occurredAt", ">=", sevenDaysAgoTimestamp()))),
+    getCountFromServer(query(componentLoansCol, where("status", "==", "ATIVO"))),
   ]);
 
   return {
@@ -796,12 +1057,164 @@ export async function dashboardSummary() {
     microcontrollersTotalCount: totalMicrocontrollers.data().count,
     microcontrollersBorrowedCount: borrowedMicrocontrollers.data().count,
     movementsLast7Days: movements7d.data().count,
+    componentLoansActiveCount: activeComponentLoans.data().count,
   };
 }
 
 export async function listCriticalComponents(max = 8) {
   const snap = await getDocs(query(componentsCol, where("critical", "==", true), fsLimit(max)));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * Retorna todos os empréstimos ativos (ferramentas e microcontroladores)
+ * atualmente sob responsabilidade de um determinado usuário.
+ */
+export async function getMyActiveLoans(userId) {
+  if (!userId) return [];
+  const [tools, microcontrollers] = await Promise.all([
+    listTools({ status: "EMPRESTADA" }),
+    listMicrocontrollers({ status: "EMPRESTADA" }),
+  ]);
+
+  const now = new Date();
+  const myItems = [];
+
+  for (const t of tools) {
+    if (t.currentLoan && t.currentLoan.userId === userId) {
+      const expDate = t.currentLoan.expectedReturnAt?.toDate
+        ? t.currentLoan.expectedReturnAt.toDate()
+        : (t.currentLoan.expectedReturnAt ? new Date(t.currentLoan.expectedReturnAt) : null);
+      const isOverdue = !!(expDate && expDate < now);
+      myItems.push({
+        id: t.id,
+        loanId: t.currentLoan.loanId,
+        type: "TOOL",
+        typeLabel: "Ferramenta",
+        name: t.name,
+        details: [t.manufacturer, t.model].filter(Boolean).join(" "),
+        icon: "bi-tools",
+        borrowedAt: t.currentLoan.borrowedAt,
+        expectedReturnAt: expDate,
+        isOverdue,
+      });
+    }
+  }
+
+  for (const m of microcontrollers) {
+    if (m.currentLoan && m.currentLoan.userId === userId) {
+      const expDate = m.currentLoan.expectedReturnAt?.toDate
+        ? m.currentLoan.expectedReturnAt.toDate()
+        : (m.currentLoan.expectedReturnAt ? new Date(m.currentLoan.expectedReturnAt) : null);
+      const isOverdue = !!(expDate && expDate < now);
+      myItems.push({
+        id: m.id,
+        loanId: m.currentLoan.loanId,
+        type: "MICROCONTROLLER",
+        typeLabel: "Microcontrolador",
+        name: m.name,
+        details: [m.family, m.model].filter(Boolean).join(" "),
+        icon: "bi-motherboard",
+        borrowedAt: m.currentLoan.borrowedAt,
+        expectedReturnAt: expDate,
+        isOverdue,
+      });
+    }
+  }
+
+  return myItems;
+}
+
+/**
+ * Retorna todos os empréstimos atualmente ativos no laboratório,
+ * identificando quantos e quais estão em atraso.
+ */
+export async function listActiveAndOverdueLoans() {
+  const [tools, microcontrollers, compLoans] = await Promise.all([
+    listTools({ status: "EMPRESTADA" }),
+    listMicrocontrollers({ status: "EMPRESTADA" }),
+    listComponentLoans({ status: "ATIVO" }),
+  ]);
+
+  const now = new Date();
+  const activeList = [];
+
+  for (const t of tools) {
+    if (t.currentLoan) {
+      const expDate = t.currentLoan.expectedReturnAt?.toDate
+        ? t.currentLoan.expectedReturnAt.toDate()
+        : (t.currentLoan.expectedReturnAt ? new Date(t.currentLoan.expectedReturnAt) : null);
+      const isOverdue = !!(expDate && expDate < now);
+      activeList.push({
+        itemId: t.id,
+        loanId: t.currentLoan.loanId,
+        itemType: "TOOL",
+        itemTypeName: "Ferramenta",
+        name: t.name,
+        icon: "bi-tools",
+        userId: t.currentLoan.userId,
+        userName: t.currentLoan.userName,
+        borrowedAt: t.currentLoan.borrowedAt,
+        expectedReturnAt: expDate,
+        isOverdue,
+      });
+    }
+  }
+
+  for (const m of microcontrollers) {
+    if (m.currentLoan) {
+      const expDate = m.currentLoan.expectedReturnAt?.toDate
+        ? m.currentLoan.expectedReturnAt.toDate()
+        : (m.currentLoan.expectedReturnAt ? new Date(m.currentLoan.expectedReturnAt) : null);
+      const isOverdue = !!(expDate && expDate < now);
+      activeList.push({
+        itemId: m.id,
+        loanId: m.currentLoan.loanId,
+        itemType: "MICROCONTROLLER",
+        itemTypeName: "Microcontrolador",
+        name: m.name,
+        icon: "bi-motherboard",
+        userId: m.currentLoan.userId,
+        userName: m.currentLoan.userName,
+        borrowedAt: m.currentLoan.borrowedAt,
+        expectedReturnAt: expDate,
+        isOverdue,
+      });
+    }
+  }
+
+  for (const cl of compLoans) {
+    const expDate = cl.expectedReturnAt?.toDate
+      ? cl.expectedReturnAt.toDate()
+      : (cl.expectedReturnAt ? new Date(cl.expectedReturnAt) : null);
+    const isOverdue = !!(expDate && expDate < now);
+    const totalQty = cl.items ? cl.items.reduce((acc, i) => acc + (i.quantityBorrowed || 0), 0) : 0;
+
+    activeList.push({
+      itemId: cl.id,
+      loanId: cl.id,
+      itemType: "COMPONENT_LOAN",
+      itemTypeName: "Reserva de Componentes",
+      name: `Reserva - ${cl.benchOrClass || "Aula/Bancada"} (${totalQty} un)`,
+      icon: "bi-box-seam-fill",
+      userId: cl.userId,
+      userName: cl.userName,
+      borrowedAt: cl.borrowedAt,
+      expectedReturnAt: expDate,
+      isOverdue,
+    });
+  }
+
+  // Ordenar atrasados primeiro, depois por data mais antiga
+  activeList.sort((a, b) => {
+    if (a.isOverdue && !b.isOverdue) return -1;
+    if (!a.isOverdue && b.isOverdue) return 1;
+    const timeA = a.expectedReturnAt ? a.expectedReturnAt.getTime() : 0;
+    const timeB = b.expectedReturnAt ? b.expectedReturnAt.getTime() : 0;
+    return timeA - timeB;
+  });
+
+  return activeList;
 }
 
 function sevenDaysAgoTimestamp() {

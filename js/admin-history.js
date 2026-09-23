@@ -505,6 +505,30 @@ function openRecordModal(item) {
         <span class="text-body-secondary">Motivo da Movimentação:</span>
         <span>${escapeHtml(reasonLabels[item.reason] || item.reason)}</span>
       </div>`;
+  } else if (item.sourceType === "COMPONENT_LOAN") {
+    const rawCompItems = item.raw?.items || [];
+    const itemsListStr = rawCompItems
+      .map(
+        (i) =>
+          `<div class="small">• <strong>${i.quantityBorrowed}x</strong> ${escapeHtml(i.componentTypeName)} ${
+            i.quantityDamaged > 0 ? `<span class="text-danger">(${i.quantityDamaged} avariados)</span>` : ""
+          }</div>`
+      )
+      .join("");
+
+    detailsHtml += `
+      <div class="list-group-item d-flex justify-content-between px-0">
+        <span class="text-body-secondary">Devolução Prevista:</span>
+        <span>${formatDate(item.expectedReturnAt)}</span>
+      </div>
+      <div class="list-group-item d-flex justify-content-between px-0">
+        <span class="text-body-secondary">Devolução Efetiva:</span>
+        <span>${item.returnedAt ? formatDateTime(item.returnedAt) : (item.status === "DEVOLVIDO" ? "Devolvido / Concluído" : "Pendente (Em aberto)")}</span>
+      </div>
+      <div class="list-group-item px-0">
+        <span class="text-body-secondary d-block mb-1">Itens do Lote (${rawCompItems.length}):</span>
+        <div class="p-2 rounded bg-body-tertiary">${itemsListStr || "Nenhum detalhe de itens disponivel"}</div>
+      </div>`;
   } else {
     detailsHtml += `
       <div class="list-group-item d-flex justify-content-between px-0">

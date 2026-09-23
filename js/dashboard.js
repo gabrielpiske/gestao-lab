@@ -15,6 +15,9 @@ async function loadSummary() {
   try {
     const summary = await dashboardSummary();
     document.getElementById("stat-critical").textContent = summary.componentsCriticalCount;
+    if (document.getElementById("stat-comp-loans-active")) {
+      document.getElementById("stat-comp-loans-active").textContent = summary.componentLoansActiveCount || 0;
+    }
     if (document.getElementById("stat-micro-borrowed")) {
       document.getElementById("stat-micro-borrowed").textContent =
         `${summary.microcontrollersBorrowedCount} de ${summary.microcontrollersTotalCount}`;

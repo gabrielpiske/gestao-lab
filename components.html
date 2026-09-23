@@ -12,11 +12,22 @@
 <body>
   <div id="app-shell">
     <div style="max-width: 1100px;">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h5 mb-0">Componentes</h1>
-        <a href="component-form.html" id="new-component-link" class="btn btn-primary btn-sm d-none">
-          <i class="bi bi-plus-lg"></i> Novo componente
-        </a>
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+          <h1 class="h5 mb-0">Componentes de Estoque</h1>
+          <p class="text-body-secondary small mb-0">Controle de saldo total, estoque disponível e reservas temporárias para aula.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button id="reserve-components-btn" class="btn btn-primary btn-sm d-none">
+            <i class="bi bi-box-seam-fill me-1"></i> Nova Reserva / Retirar para Aula
+          </button>
+          <button id="manage-kits-btn" class="btn btn-outline-secondary btn-sm d-none">
+            <i class="bi bi-collection-fill me-1"></i> Kits de Aula
+          </button>
+          <a href="component-form.html" id="new-component-link" class="btn btn-outline-primary btn-sm d-none">
+            <i class="bi bi-plus-lg"></i> Novo Componente
+          </a>
+        </div>
       </div>
 
       <div class="row g-2 mb-3">
@@ -44,15 +55,186 @@
             <tr class="small text-body-secondary">
               <th class="ps-3">Tipo</th>
               <th>Código</th>
-              <th>Quantidade</th>
+              <th>Estoque / Em Uso</th>
               <th>Localização</th>
               <th>Fabricante</th>
+              <th class="text-end pe-3">Ação</th>
             </tr>
           </thead>
           <tbody id="components-tbody">
-            <tr><td class="ps-3 py-3 text-body-secondary small" colspan="5">Carregando...</td></tr>
+            <tr><td class="ps-3 py-3 text-body-secondary small" colspan="6">Carregando...</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Nova Reserva / Retirada para Aula -->
+  <div class="modal fade" id="component-reservation-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title h6 d-flex align-items-center gap-2">
+            <i class="bi bi-box-seam-fill text-primary"></i>
+            Nova Reserva / Retirada de Componentes para Aula
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <form id="component-reservation-form">
+          <div class="modal-body small">
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Identificação da Aula / Bancada <span class="text-danger">*</span></label>
+                <input type="text" id="res-bench-input" class="form-control form-control-sm" placeholder="Ex: Bancada 04 - Aula de Sistemas Embarcados" required>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Devolução Prevista</label>
+                <input type="date" id="res-date-input" class="form-control form-control-sm">
+              </div>
+            </div>
+
+            <!-- Seleção por Kit Didático -->
+            <div class="card p-3 mb-3 bg-body-tertiary border">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="fw-semibold text-body"><i class="bi bi-magic me-1 text-primary"></i>Carregar Kit Didático Pré-definido</span>
+                <span class="text-body-secondary extra-small">Preenchimento rápido</span>
+              </div>
+              <div class="input-group input-group-sm">
+                <select id="res-kit-select" class="form-select">
+                  <option value="">Selecione um kit didático cadastrado...</option>
+                </select>
+                <button type="button" id="load-kit-btn" class="btn btn-outline-primary">
+                  <i class="bi bi-download me-1"></i> Adicionar Itens do Kit
+                </button>
+              </div>
+            </div>
+
+            <!-- Adicionar Componente Individual -->
+            <div class="card p-3 mb-3 border">
+              <span class="fw-semibold text-body mb-2"><i class="bi bi-plus-circle me-1 text-primary"></i>Adicionar Componente Individual</span>
+              <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-6">
+                  <label class="form-label text-body-secondary mb-1">Componente</label>
+                  <select id="res-comp-select" class="form-select form-select-sm">
+                    <option value="">Selecione o componente...</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-3">
+                  <label class="form-label text-body-secondary mb-1">Quantidade</label>
+                  <input type="number" id="res-comp-qty" class="form-control form-control-sm" value="1" min="1">
+                </div>
+                <div class="col-6 col-md-3">
+                  <button type="button" id="add-to-cart-btn" class="btn btn-sm btn-primary w-100">
+                    <i class="bi bi-cart-plus me-1"></i> Adicionar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista / Carrinho de Itens Selecionados -->
+            <label class="form-label fw-semibold">Itens da Reserva (<span id="cart-items-count">0</span>)</label>
+            <div class="table-responsive border rounded mb-3" style="max-height: 200px; overflow-y: auto;">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr class="table-light">
+                    <th>Componente</th>
+                    <th class="text-center" style="width: 120px;">Quantidade</th>
+                    <th class="text-end pe-3" style="width: 80px;">Remover</th>
+                  </tr>
+                </thead>
+                <tbody id="res-cart-tbody">
+                  <tr><td colspan="3" class="text-center text-body-secondary py-3">Nenhum componente adicionado à reserva.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <label class="form-label fw-semibold">Observações / Notas</label>
+              <textarea id="res-notes-input" class="form-control form-control-sm" rows="2" placeholder="Observações opcionais sobre o uso dos componentes..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-sm btn-primary" id="confirm-reservation-btn">
+              <i class="bi bi-check2-circle me-1"></i> Finalizar Reserva
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Gerenciar Kits Didáticos de Aula -->
+  <div class="modal fade" id="manage-kits-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title h6 d-flex align-items-center gap-2">
+            <i class="bi bi-collection-fill text-primary"></i>
+            Gerenciar Kits Didáticos de Aula
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body small">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-body-secondary">Kits pré-configurados facilitam retiradas em lote para turmas.</span>
+            <button id="show-new-kit-form-btn" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-plus-lg me-1"></i> Criar Novo Kit
+            </button>
+          </div>
+
+          <!-- Form de Novo Kit (Oculto por padrão) -->
+          <div id="new-kit-form-card" class="card p-3 mb-3 border bg-body-tertiary d-none">
+            <h6 class="h6 mb-2">Cadastrar Novo Kit Didático</h6>
+            <div class="mb-2">
+              <label class="form-label">Nome do Kit <span class="text-danger">*</span></label>
+              <input type="text" id="kit-name-input" class="form-control form-control-sm" placeholder="Ex: Kit Eletrônica Analógica 1">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Descrição</label>
+              <input type="text" id="kit-desc-input" class="form-control form-control-sm" placeholder="Ex: Componentes para experimento de fontes reguladas">
+            </div>
+            
+            <label class="form-label fw-semibold mt-2">Adicionar Componente ao Kit</label>
+            <div class="row g-2 align-items-end mb-2">
+              <div class="col-7">
+                <select id="kit-comp-select" class="form-select form-select-sm">
+                  <option value="">Selecione o componente...</option>
+                </select>
+              </div>
+              <div class="col-3">
+                <input type="number" id="kit-comp-qty" class="form-control form-control-sm" value="1" min="1">
+              </div>
+              <div class="col-2">
+                <button type="button" id="add-kit-item-btn" class="btn btn-sm btn-secondary w-100">+</button>
+              </div>
+            </div>
+
+            <div class="table-responsive border rounded mb-3 bg-body" style="max-height: 150px; overflow-y: auto;">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr class="table-light"><th>Componente</th><th class="text-center">Qtd</th><th class="text-end pe-2">Remover</th></tr>
+                </thead>
+                <tbody id="kit-builder-tbody">
+                  <tr><td colspan="3" class="text-center text-body-secondary py-2">Nenhum item adicionado ao kit.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" id="cancel-kit-btn" class="btn btn-sm btn-outline-secondary">Cancelar</button>
+              <button type="button" id="save-kit-btn" class="btn btn-sm btn-primary">Salvar Kit</button>
+            </div>
+          </div>
+
+          <!-- Lista de Kits Existentes -->
+          <div id="kits-list-container">
+            <div class="text-center py-3 text-body-secondary">Carregando kits...</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
       </div>
     </div>
   </div>
