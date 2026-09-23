@@ -59,10 +59,8 @@ gestao-lab/
 | --- | --- |
 | `users` | Perfil: `name`, `email`, `role`, `active`, `createdAt`; ID é o UID do Auth. |
 | `componentTypes` | Tipos configuráveis: `name`, `description`, `icon`, `attributes[]`; cada atributo contém opções embutidas. |
-| `components` | Inventário: tipo, código, localização, fabricante, quantidade, `reservedQuantity`, mínimo e `critical`. |
+| `components` | Inventário: tipo, código, localização, fabricante, quantidade, mínimo e `critical`. |
 | `stockMovements` | Auditoria de entradas/saídas: componente, tipo, motivo, quantidade, usuário e `occurredAt`. |
-| `componentLoans` | Reservas temporárias de componentes para aulas/bancadas: `benchOrClass`, `items[]`, `status`, `userId`, `userName`, `borrowedAt`, `expectedReturnAt`, `returnedAt`. |
-| `componentKits` | Templates didáticos de aulas: `name`, `description`, `items[]`, `createdBy`, `createdByName`, `createdAt`. |
 | `tools` | Ferramentas: dados descritivos, `status` e `currentLoan`. |
 | `toolLoans` | Histórico de empréstimos de ferramentas. |
 | `microcontrollers` | Placas: família, conectividade, `status` e `currentLoan`. |
@@ -72,19 +70,13 @@ Estados de item emprestável: `DISPONIVEL`, `EMPRESTADA`, `MANUTENCAO`, `INDISPO
 
 ## Fluxos importantes
 
-### Estoque e Movimentações
+### Estoque
 
 `registerMovement()` em `js/data.js` executa uma transação: lê o componente, calcula a variação (`ENTRADA` ou saída), impede estoque negativo, atualiza `quantity` e `critical`, e cria o registro imutável em `stockMovements`.
 
-### Reservas e Kits de Componentes (Aulas Práticas)
-
-`createComponentLoan()` em `js/data.js` permite a retirada em lote ou via Kits Didáticos pré-cadastrados. Em uma transação Firestore, valida o estoque disponível (`quantity - reservedQuantity`), incrementa `reservedQuantity` e gera o registro em `componentLoans`. 
-
-No encerramento via `returnComponentLoan()`, a devolução guiada libera o saldo de `reservedQuantity`. Caso haja peças queimadas/danificadas (`quantityDamaged > 0`), o sistema reduz o estoque físico total e gera automaticamente uma baixa em `stockMovements` (`SAIDA` por `AVARIA_AULA` ou `CONSUMO_AULA`), evitando furos de estoque.
-
 ### Empréstimos
 
-Ferramentas e microcontroladores usam o mesmo padrão transacional: o item precisa estar `DISPONIVEL`; a transação cria o empréstimo e atualiza o item para `EMPRESTADA` com `currentLoan`. A devolução marca `returnedAt` e limpa `currentLoan`, restaurando `DISPONIVEL`.
+Ferramentas e microcontroladores usam o mesmo padrão transacional: o item precisa estar `DISPONIVEL`; a transação cria o empréstimo e atualiza o item para `EMPRESTADA` com `currentLoan`. A devolução marca `returnedAt` e limpa `currentLoan`, restaurando `DISPONIVEL`. Qualquer usuário pode consultar seus empréstimos ativos e registrar devoluções diretamente pelo modal global **Meus Empréstimos** na barra de navegação (`nav.js`), pelo **Dashboard** (`dashboard.js` com banner de alertas de atraso) ou pelo painel de **Histórico & Auditoria** (`admin-history.js`).
 
 ### Autenticação e perfis
 

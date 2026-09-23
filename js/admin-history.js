@@ -1,7 +1,7 @@
 // js/admin-history.js
 import { requireAuth } from "./auth-guard.js";
 import { renderLayout } from "./nav.js";
-import { adminAuditSummary, loadUnifiedAuditData } from "./data.js";
+import { adminAuditSummary, loadUnifiedAuditData, returnLoan, returnMicrocontrollerLoan } from "./data.js";
 import {
   escapeHtml,
   formatDateTime,
@@ -505,30 +505,6 @@ function openRecordModal(item) {
         <span class="text-body-secondary">Motivo da Movimentação:</span>
         <span>${escapeHtml(reasonLabels[item.reason] || item.reason)}</span>
       </div>`;
-  } else if (item.sourceType === "COMPONENT_LOAN") {
-    const rawCompItems = item.raw?.items || [];
-    const itemsListStr = rawCompItems
-      .map(
-        (i) =>
-          `<div class="small">• <strong>${i.quantityBorrowed}x</strong> ${escapeHtml(i.componentTypeName)} ${
-            i.quantityDamaged > 0 ? `<span class="text-danger">(${i.quantityDamaged} avariados)</span>` : ""
-          }</div>`
-      )
-      .join("");
-
-    detailsHtml += `
-      <div class="list-group-item d-flex justify-content-between px-0">
-        <span class="text-body-secondary">Devolução Prevista:</span>
-        <span>${formatDate(item.expectedReturnAt)}</span>
-      </div>
-      <div class="list-group-item d-flex justify-content-between px-0">
-        <span class="text-body-secondary">Devolução Efetiva:</span>
-        <span>${item.returnedAt ? formatDateTime(item.returnedAt) : (item.status === "DEVOLVIDO" ? "Devolvido / Concluído" : "Pendente (Em aberto)")}</span>
-      </div>
-      <div class="list-group-item px-0">
-        <span class="text-body-secondary d-block mb-1">Itens do Lote (${rawCompItems.length}):</span>
-        <div class="p-2 rounded bg-body-tertiary">${itemsListStr || "Nenhum detalhe de itens disponivel"}</div>
-      </div>`;
   } else {
     detailsHtml += `
       <div class="list-group-item d-flex justify-content-between px-0">
@@ -551,7 +527,45 @@ function openRecordModal(item) {
 
   detailsHtml += `</div>`;
 
+  const isOpenLoan = (item.sourceType === "TOOL_LOAN" || item.sourceType === "MICRO_LOAN") && (item.status === "EM_ABERTO" || item.status === "ATRASADO");
+  if (isOpenLoan) {
+    detailsHtml += `
+      <div class="p-3 bg-primary-subtle border border-primary-subtle rounded-3 d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
+        <div>
+          <strong class="d-block text-primary">Empréstimo em Aberto</strong>
+          <span class="small text-body-secondary">Deseja registrar a devolução deste item agora?</span>
+        </div>
+        <button id="modal-return-loan-btn" class="btn btn-sm btn-primary">
+          <i class="bi bi-box-arrow-in-left me-1"></i> Registrar Devolução
+        </button>
+      </div>`;
+  }
+
   recordModalBody.innerHTML = detailsHtml;
+
+  if (isOpenLoan) {
+    const returnBtn = document.getElementById("modal-return-loan-btn");
+    returnBtn?.addEventListener("click", async () => {
+      returnBtn.disabled = true;
+      returnBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Devolvendo...`;
+      try {
+        if (item.sourceType === "TOOL_LOAN") {
+          await returnLoan(item.raw.toolId, item.id);
+        } else {
+          await returnMicrocontrollerLoan(item.raw.microcontrollerId, item.id);
+        }
+        showSuccess("Devolução registrada com sucesso!");
+        recordModalInstance?.hide();
+        await loadData(false);
+      } catch (err) {
+        console.error("Erro ao devolver item via auditoria:", err);
+        showError("Erro ao registrar devolução: " + err.message);
+        returnBtn.disabled = false;
+        returnBtn.innerHTML = `<i class="bi bi-box-arrow-in-left me-1"></i> Registrar Devolução`;
+      }
+    });
+  }
+
   recordModalInstance?.show();
 }
 

@@ -55,22 +55,6 @@
         { "fieldPath": "microcontrollerId", "order": "ASCENDING" },
         { "fieldPath": "borrowedAt", "order": "DESCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "componentLoans",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "borrowedAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "componentLoans",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "userId", "order": "ASCENDING" },
-        { "fieldPath": "borrowedAt", "order": "DESCENDING" }
-      ]
     }
   ],
   "fieldOverrides": []
