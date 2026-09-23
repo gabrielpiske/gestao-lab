@@ -1,7 +1,6 @@
 // js/nav.js
 import { logout } from "./auth-guard.js";
-import { escapeHtml, formatDate, showSuccess, showError } from "./utils.js";
-import { getMyActiveLoans, returnLoan, returnMicrocontrollerLoan } from "./data.js";
+import { escapeHtml } from "./utils.js";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "index.html", label: "Dashboard", icon: "bi-speedometer2" },
@@ -47,7 +46,7 @@ export function renderLayout(user, activePageKey) {
               <i class="bi bi-cpu-fill text-primary fs-4"></i>
               <span class="fw-bold fs-5 tracking-wide">LabTrack</span>
             </div>
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill" style="font-size: 0.65rem;">v1.9</span>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill" style="font-size: 0.65rem;">v1.7</span>
           </div>
           <div class="mt-2 ps-1">
             <p class="small fw-semibold mb-0 text-body" style="font-size: 0.85rem;">Gabriel Piske</p>
@@ -83,15 +82,7 @@ export function renderLayout(user, activePageKey) {
               />
             </div>
           </form>
-
-          <!-- Botão Meus Empréstimos -->
-          <button id="my-loans-btn" class="btn btn-sm btn-outline-primary ms-auto d-flex align-items-center gap-2" title="Ver meus itens emprestados">
-            <i class="bi bi-person-workspace"></i>
-            <span class="d-none d-sm-inline">Meus Empréstimos</span>
-            <span id="my-loans-badge" class="badge bg-primary rounded-pill d-none" style="font-size: 0.7rem;">0</span>
-          </button>
-
-          <button id="theme-toggle-btn" class="btn btn-sm btn-outline-secondary" title="Alternar tema">
+          <button id="theme-toggle-btn" class="btn btn-sm btn-outline-secondary ms-auto" title="Alternar tema">
             <i class="bi bi-moon-stars"></i>
           </button>
         </header>
@@ -99,30 +90,6 @@ export function renderLayout(user, activePageKey) {
         <main class="flex-grow-1 overflow-auto p-4">
           ${existingContent}
         </main>
-      </div>
-    </div>
-
-    <!-- Modal Global: Meus Empréstimos -->
-    <div class="modal fade" id="my-loans-modal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title h6 d-flex align-items-center gap-2">
-              <i class="bi bi-person-workspace text-primary"></i>
-              Meus Itens Emprestados
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-          </div>
-          <div class="modal-body small" id="my-loans-body">
-            <div class="d-flex align-items-center gap-2 py-3">
-              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-              <span>Carregando seus empréstimos...</span>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
-          </div>
-        </div>
       </div>
     </div>
   `;
@@ -138,9 +105,6 @@ export function renderLayout(user, activePageKey) {
   const themeBtn = document.getElementById("theme-toggle-btn");
   themeBtn.addEventListener("click", toggleTheme);
   updateThemeIcon(themeBtn);
-
-  // Inicializar Meus Empréstimos
-  setupMyLoans(user);
 }
 
 function roleLabel(role) {
@@ -165,124 +129,6 @@ function updateThemeIcon(btn) {
   btn.innerHTML = isDark ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon-stars"></i>';
 }
 
-/**
- * Carrega e controla o modal e badge de "Meus Empréstimos"
- */
-async function setupMyLoans(user) {
-  const myLoansBtn = document.getElementById("my-loans-btn");
-  const myLoansBadge = document.getElementById("my-loans-badge");
-  const myLoansBody = document.getElementById("my-loans-body");
-  const modalEl = document.getElementById("my-loans-modal");
-
-  let modalInstance = null;
-  if (modalEl && window.bootstrap?.Modal) {
-    modalInstance = new bootstrap.Modal(modalEl);
-  }
-
-  async function refreshLoansList() {
-    try {
-      const items = await getMyActiveLoans(user.uid);
-      const count = items.length;
-
-      if (count > 0) {
-        myLoansBadge.textContent = count;
-        myLoansBadge.classList.remove("d-none");
-        const hasOverdue = items.some((i) => i.isOverdue);
-        myLoansBadge.className = `badge rounded-pill ${hasOverdue ? "bg-danger" : "bg-primary"}`;
-      } else {
-        myLoansBadge.classList.add("d-none");
-      }
-
-      if (!myLoansBody) return;
-
-      if (count === 0) {
-        myLoansBody.innerHTML = `
-          <div class="text-center py-4 text-body-secondary">
-            <i class="bi bi-check2-circle fs-3 text-success d-block mb-2"></i>
-            <p class="mb-0 fw-medium">Você não possui nenhum equipamento ou placa emprestada no momento.</p>
-          </div>`;
-        return;
-      }
-
-      myLoansBody.innerHTML = `
-        <p class="text-body-secondary mb-3">Você possui <strong>${count}</strong> item(ns) sob sua responsabilidade:</p>
-        <div class="list-group gap-2">
-          ${items
-            .map(
-              (item) => `
-            <div class="list-group-item d-flex justify-content-between align-items-center p-3 rounded-3 border">
-              <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                  <i class="bi ${item.icon} text-primary"></i>
-                  <span class="fw-semibold">${escapeHtml(item.name)}</span>
-                  <span class="badge bg-secondary-subtle text-body border" style="font-size: 0.7rem;">${escapeHtml(item.typeLabel)}</span>
-                </div>
-                ${item.details ? `<div class="text-body-secondary small mb-1">${escapeHtml(item.details)}</div>` : ""}
-                <div class="small">
-                  ${
-                    item.isOverdue
-                      ? `<span class="text-danger fw-medium"><i class="bi bi-exclamation-octagon me-1"></i>Devolução atrasada! Prevista para ${formatDate(item.expectedReturnAt)}</span>`
-                      : `<span class="text-body-secondary">Devolução prevista: ${formatDate(item.expectedReturnAt)}</span>`
-                  }
-                </div>
-              </div>
-              <div>
-                <button
-                  class="btn btn-sm btn-outline-primary return-my-loan-btn"
-                  data-type="${item.type}"
-                  data-id="${item.id}"
-                  data-loan-id="${item.loanId}"
-                  title="Devolver este item ao laboratório"
-                >
-                  <i class="bi bi-box-arrow-in-left me-1"></i> Devolver
-                </button>
-              </div>
-            </div>`
-            )
-            .join("")}
-        </div>`;
-
-      myLoansBody.querySelectorAll(".return-my-loan-btn").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const type = btn.dataset.type;
-          const id = btn.dataset.id;
-          const loanId = btn.dataset.loanId;
-
-          btn.disabled = true;
-          btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span>`;
-
-          try {
-            if (type === "TOOL") {
-              await returnLoan(id, loanId);
-            } else {
-              await returnMicrocontrollerLoan(id, loanId);
-            }
-            showSuccess("Item devolvido com sucesso!");
-            await refreshLoansList();
-          } catch (err) {
-            console.error(err);
-            showError("Erro ao devolver item: " + err.message);
-            btn.disabled = false;
-            btn.innerHTML = `<i class="bi bi-box-arrow-in-left me-1"></i> Devolver`;
-          }
-        });
-      });
-    } catch (err) {
-      console.error("Erro ao carregar meus empréstimos:", err);
-    }
-  }
-
-  if (myLoansBtn) {
-    myLoansBtn.addEventListener("click", () => {
-      refreshLoansList();
-      modalInstance?.show();
-    });
-  }
-
-  // Carregar contagem inicial em segundo plano
-  refreshLoansList();
-}
-
 // Limpeza de segurança para garantir que nenhum backdrop de modal trave a interface
 document.addEventListener("hidden.bs.modal", () => {
   const openModals = document.querySelectorAll(".modal.show");
@@ -293,4 +139,3 @@ document.addEventListener("hidden.bs.modal", () => {
     document.body.style.removeProperty("padding-right");
   }
 });
-

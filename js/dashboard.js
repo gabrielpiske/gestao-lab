@@ -1,14 +1,13 @@
 // js/dashboard.js
 import { requireAuth } from "./auth-guard.js";
 import { renderLayout } from "./nav.js";
-import { dashboardSummary, listCriticalComponents, listRecentMovements, listActiveAndOverdueLoans } from "./data.js";
-import { escapeHtml, timeAgo, formatDate, STOCK_MOVEMENT_REASONS } from "./utils.js";
+import { dashboardSummary, listCriticalComponents, listRecentMovements } from "./data.js";
+import { escapeHtml, timeAgo, STOCK_MOVEMENT_REASONS } from "./utils.js";
 
 const user = await requireAuth();
 renderLayout(user, "dashboard");
 
 loadSummary();
-loadActiveLoans();
 loadCritical();
 loadRecentMovements();
 
@@ -26,70 +25,6 @@ async function loadSummary() {
     document.getElementById("stat-movements-7d").textContent = summary.movementsLast7Days;
   } catch (err) {
     console.error(err);
-  }
-}
-
-async function loadActiveLoans() {
-  const container = document.getElementById("active-loans-list");
-  const overdueAlertContainer = document.getElementById("overdue-alert-container");
-  const overdueAlertTitle = document.getElementById("overdue-alert-title");
-  const overdueAlertDesc = document.getElementById("overdue-alert-desc");
-  const overdueAlertLink = document.getElementById("overdue-alert-link");
-
-  try {
-    const items = await listActiveAndOverdueLoans();
-    const overdueItems = items.filter((i) => i.isOverdue);
-
-    // 1. Alerta de atraso no topo
-    if (overdueItems.length > 0) {
-      overdueAlertContainer.classList.remove("d-none");
-      overdueAlertTitle.textContent = `Atenção: ${overdueItems.length} item(ns) com devolução em atraso!`;
-      const namesList = overdueItems.slice(0, 3).map((i) => `${i.name} (com ${i.userName})`).join(", ");
-      overdueAlertDesc.textContent = `Itens vencidos: ${namesList}${overdueItems.length > 3 ? ` e mais ${overdueItems.length - 3}...` : ""}.`;
-      if (user.role === "ADMIN") {
-        overdueAlertLink.href = "admin-history.html";
-        overdueAlertLink.innerHTML = `Ver na Auditoria <i class="bi bi-arrow-right ms-1"></i>`;
-      } else {
-        overdueAlertLink.href = "tools.html";
-        overdueAlertLink.innerHTML = `Ver Equipamentos <i class="bi bi-arrow-right ms-1"></i>`;
-      }
-    } else {
-      overdueAlertContainer.classList.add("d-none");
-    }
-
-    // 2. Card de Empréstimos em Aberto
-    if (items.length === 0) {
-      container.innerHTML = `<p class="text-body-secondary small mb-0">Nenhum equipamento emprestado no momento.</p>`;
-      return;
-    }
-
-    container.innerHTML = items
-      .slice(0, 8)
-      .map(
-        (i) => `
-        <div class="d-flex justify-content-between align-items-center small border-bottom pb-2">
-          <div>
-            <div class="d-flex align-items-center gap-1">
-              <i class="bi ${i.icon} text-primary"></i>
-              <span class="fw-medium">${escapeHtml(i.name)}</span>
-            </div>
-            <div class="text-body-secondary" style="font-size: 0.75rem;">
-              Com ${escapeHtml(i.userName)}
-            </div>
-          </div>
-          <div class="text-end">
-            ${
-              i.isOverdue
-                ? `<span class="badge text-bg-danger" style="font-size: 0.7rem;">Atrasado (${formatDate(i.expectedReturnAt)})</span>`
-                : `<span class="badge text-bg-secondary" style="font-size: 0.7rem;">Previsto: ${formatDate(i.expectedReturnAt)}</span>`
-            }
-          </div>
-        </div>`
-      )
-      .join("");
-  } catch (err) {
-    console.error("Erro ao carregar empréstimos no dashboard:", err);
-    container.innerHTML = `<p class="text-danger small mb-0">Não foi possível carregar os empréstimos ativos.</p>`;
   }
 }
 
@@ -140,4 +75,3 @@ async function loadRecentMovements() {
     container.innerHTML = `<p class="text-danger small mb-0">Não foi possível carregar as movimentações.</p>`;
   }
 }
-

@@ -76,7 +76,7 @@ Estados de item emprestável: `DISPONIVEL`, `EMPRESTADA`, `MANUTENCAO`, `INDISPO
 
 ### Empréstimos
 
-Ferramentas e microcontroladores usam o mesmo padrão transacional: o item precisa estar `DISPONIVEL`; a transação cria o empréstimo e atualiza o item para `EMPRESTADA` com `currentLoan`. A devolução marca `returnedAt` e limpa `currentLoan`, restaurando `DISPONIVEL`. Qualquer usuário pode consultar seus empréstimos ativos e registrar devoluções diretamente pelo modal global **Meus Empréstimos** na barra de navegação (`nav.js`), pelo **Dashboard** (`dashboard.js` com banner de alertas de atraso) ou pelo painel de **Histórico & Auditoria** (`admin-history.js`).
+Ferramentas e microcontroladores usam o mesmo padrão transacional: o item precisa estar `DISPONIVEL`; a transação cria o empréstimo e atualiza o item para `EMPRESTADA` com `currentLoan`. A devolução marca `returnedAt` e limpa `currentLoan`, restaurando `DISPONIVEL`.
 
 ### Autenticação e perfis
 
