@@ -67,24 +67,19 @@ const borrowKitNotes = document.getElementById("borrow-kit-notes");
 const borrowKitError = document.getElementById("borrow-kit-error");
 const confirmBorrowBtn = document.getElementById("confirm-borrow-btn");
 
-// Modais Bootstrap
-let kitModalInstance = null;
-let borrowKitModalInstance = null;
-
-// Estado local
-let allKits = [];
-let allComponents = [];
-let draftKitItems = []; // [{ componentId, componentTypeName, internalCode, quantity }]
-let selectedKitForBorrow = null;
-
-document.addEventListener("DOMContentLoaded", () => {
+function getKitModal() {
   if (kitModalEl && window.bootstrap?.Modal) {
-    kitModalInstance = new bootstrap.Modal(kitModalEl);
+    return bootstrap.Modal.getOrCreateInstance(kitModalEl);
   }
+  return null;
+}
+
+function getBorrowKitModal() {
   if (borrowKitModalEl && window.bootstrap?.Modal) {
-    borrowKitModalInstance = new bootstrap.Modal(borrowKitModalEl);
+    return bootstrap.Modal.getOrCreateInstance(borrowKitModalEl);
   }
-});
+  return null;
+}
 
 // Exibir controles de docente se for STAFF
 if (isStaff) {
@@ -155,7 +150,7 @@ kitForm.addEventListener("submit", async (e) => {
       showSuccess("Kit de aula criado com sucesso!");
     }
 
-    kitModalInstance?.hide();
+    getKitModal()?.hide();
     resetKitForm();
     await loadInitialData();
   } catch (err) {
@@ -183,7 +178,7 @@ borrowKitForm.addEventListener("submit", async (e) => {
   try {
     await borrowKit(kitId, { expectedReturnAt, notes }, user);
     showSuccess("Kit retirado com sucesso! Todos os componentes foram baixados do estoque em 1-clique.");
-    borrowKitModalInstance?.hide();
+    getBorrowKitModal()?.hide();
     await loadInitialData();
   } catch (err) {
     console.error("Erro ao retirar kit:", err);
@@ -358,7 +353,7 @@ function openBorrowModal(kit) {
   borrowKitNotes.value = "";
   borrowKitError.classList.add("d-none");
 
-  borrowKitModalInstance?.show();
+  getBorrowKitModal()?.show();
 }
 
 /* =========================== MEUS KITS RETIRADOS =========================== */
@@ -507,7 +502,7 @@ function openEditModal(kit) {
 
   kitModalTitle.innerHTML = `<i class="bi bi-pencil text-primary me-1"></i> Editar Kit de Aula Prática`;
   renderDraftKitItems();
-  kitModalInstance?.show();
+  getKitModal()?.show();
 }
 
 function resetKitForm() {

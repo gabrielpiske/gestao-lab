@@ -512,10 +512,12 @@ export async function borrowKit(kitId, { expectedReturnAt, notes }, user) {
       throw new Error("Este kit não possui componentes vinculados.");
     }
 
-    // 1. Ler todos os componentes vinculados e verificar estoque
-    const componentSnaps = await Promise.all(
-      kit.items.map((item) => tx.get(doc(db, "components", item.componentId)))
-    );
+    // 1. Ler todos os componentes vinculados de forma sequencial
+    const componentSnaps = [];
+    for (const item of kit.items) {
+      const snap = await tx.get(doc(db, "components", item.componentId));
+      componentSnaps.push(snap);
+    }
 
     const stockUpdates = [];
     const movementRecords = [];
@@ -622,10 +624,12 @@ export async function returnKitLoan(loanId) {
       throw new Error("Empréstimo sem itens registrados para devolução.");
     }
 
-    // 1. Ler todos os componentes para atualizar a quantidade
-    const componentSnaps = await Promise.all(
-      loan.items.map((item) => tx.get(doc(db, "components", item.componentId)))
-    );
+    // 1. Ler todos os componentes sequencialmente
+    const componentSnaps = [];
+    for (const item of loan.items) {
+      const snap = await tx.get(doc(db, "components", item.componentId));
+      componentSnaps.push(snap);
+    }
 
     const stockUpdates = [];
     const movementRecords = [];
