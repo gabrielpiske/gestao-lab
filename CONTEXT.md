@@ -29,6 +29,7 @@ Sirva a pasta por HTTP para testes locais. Para configuração real no `vercel d
 gestao-lab/
 ├── index.html                 # Dashboard
 ├── login.html / register.html # Entrada e cadastro Firebase
+├── kits.html                  # Kits de aulas práticas (retirada e devolução 1-clique)
 ├── components.html            # Catálogo de componentes
 ├── component-form.html        # Criar/editar componente
 ├── movements.html             # Entradas e saídas de estoque
@@ -65,14 +66,16 @@ gestao-lab/
 | `toolLoans` | Histórico de empréstimos de ferramentas. |
 | `microcontrollers` | Placas: família, conectividade, `status` e `currentLoan`. |
 | `microcontrollerLoans` | Histórico de empréstimos de microcontroladores. |
+| `kits` | Kits de aulas práticas: `name`, `description`, `targetClass`, `items[]` (componentes e quantidades), `createdBy`. |
+| `kitLoans` | Empréstimos de kits: `kitId`, `kitName`, `userId`, `userName`, `items[]`, `status` (`ATIVO`/`DEVOLVIDO`), `borrowedAt`, `returnedAt`. |
 
 Estados de item emprestável: `DISPONIVEL`, `EMPRESTADA`, `MANUTENCAO`, `INDISPONIVEL`. Um componente é crítico quando `quantity <= minQuantity`.
 
 ## Fluxos importantes
 
-### Estoque
+### Estoque e Kits de Aulas Práticas
 
-`registerMovement()` em `js/data.js` executa uma transação: lê o componente, calcula a variação (`ENTRADA` ou saída), impede estoque negativo, atualiza `quantity` e `critical`, e cria o registro imutável em `stockMovements`.
+`registerMovement()` em `js/data.js` executa uma transação para movimentação manual de estoque. Para aulas práticas, os docentes criam kits em `kits.html`. A retirada com 1-clique (`borrowKit()`) baixa atomicamente todos os componentes do kit no Firestore e gera os registros de saída em `stockMovements`. A devolução com 1-clique (`returnKitLoan()`) restaura a quantidade de cada componente e registra as entradas em `stockMovements`, evitando que devoluções sejam esquecidas ou feitas em duplicidade.
 
 ### Empréstimos
 

@@ -1,10 +1,11 @@
 // js/nav.js
 import { logout } from "./auth-guard.js";
 import { escapeHtml, formatDate, showSuccess, showError } from "./utils.js";
-import { getMyActiveLoans, returnLoan, returnMicrocontrollerLoan } from "./data.js";
+import { getMyActiveLoans, returnLoan, returnMicrocontrollerLoan, returnKitLoan } from "./data.js";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "index.html", label: "Dashboard", icon: "bi-speedometer2" },
+  { key: "kits", href: "kits.html", label: "Kits de Aulas", icon: "bi-box-seam-fill" },
   { key: "components", href: "components.html", label: "Componentes", icon: "bi-cpu" },
   { key: "microcontrollers", href: "microcontrollers.html", label: "Microcontroladores", icon: "bi-motherboard" },
   { key: "tools", href: "tools.html", label: "Equipamentos e Ferramentas", icon: "bi-tools" },
@@ -252,12 +253,14 @@ async function setupMyLoans(user) {
           btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span>`;
 
           try {
-            if (type === "TOOL") {
+            if (type === "KIT") {
+              await returnKitLoan(loanId);
+            } else if (type === "TOOL") {
               await returnLoan(id, loanId);
             } else {
               await returnMicrocontrollerLoan(id, loanId);
             }
-            showSuccess("Item devolvido com sucesso!");
+            showSuccess("Item/Kit devolvido com sucesso!");
             await refreshLoansList();
           } catch (err) {
             console.error(err);

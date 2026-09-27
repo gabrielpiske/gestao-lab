@@ -445,6 +445,264 @@ export async function returnMicrocontrollerLoan(microcontrollerId, loanId) {
   });
 }
 
+/* ============================== KITS DE AULAS PRÁTICAS ============================== */
+
+const kitsCol = collection(db, "kits");
+const kitLoansCol = collection(db, "kitLoans");
+
+export async function listKits({ q } = {}) {
+  const snap = await getDocs(query(kitsCol, orderBy("name")));
+  let items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  if (q) {
+    const needle = normalize(q);
+    items = items.filter((k) =>
+      [k.name, k.description, k.targetClass]
+        .filter(Boolean)
+        .some((f) => normalize(f).includes(needle))
+    );
+  }
+
+  return items;
+}
+
+export async function getKit(id) {
+  const snap = await getDoc(doc(db, "kits", id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function createKit({ name, description, targetClass, items }, user) {
+  return addDoc(kitsCol, {
+    name,
+    description: description || "",
+    targetClass: targetClass || "",
+    items: items || [],
+    createdBy: user.uid,
+    createdByName: user.name,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function updateKit(id, patch) {
+  await updateDoc(doc(db, "kits", id), {
+    ...patch,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteKit(id) {
+  await deleteDoc(doc(db, "kits", id));
+}
+
+/**
+ * Retira/reserva um kit com 1-Clique.
+ * Executa uma transação no Firestore para garantir baixas no estoque de forma atômica.
+ */
+export async function borrowKit(kitId, { expectedReturnAt, notes }, user) {
+  const kitRef = doc(db, "kits", kitId);
+  const loanRef = doc(kitLoansCol);
+
+  await runTransaction(db, async (tx) => {
+    const kitSnap = await tx.get(kitRef);
+    if (!kitSnap.exists()) throw new Error("Kit de aula não encontrado.");
+    const kit = kitSnap.data();
+
+    if (!kit.items || kit.items.length === 0) {
+      throw new Error("Este kit não possui componentes vinculados.");
+    }
+
+    // 1. Ler todos os componentes vinculados e verificar estoque
+    const componentSnaps = await Promise.all(
+      kit.items.map((item) => tx.get(doc(db, "components", item.componentId)))
+    );
+
+    const stockUpdates = [];
+    const movementRecords = [];
+
+    for (let i = 0; i < kit.items.length; i++) {
+      const item = kit.items[i];
+      const compSnap = componentSnaps[i];
+
+      if (!compSnap.exists()) {
+        throw new Error(`Componente (ID: ${item.componentId}) do kit não foi encontrado no estoque.`);
+      }
+
+      const comp = compSnap.data();
+      const needed = Number(item.quantity || 1);
+
+      if (comp.quantity < needed) {
+        throw new Error(
+          `Estoque insuficiente para "${comp.componentTypeName || item.componentTypeName}". Disponível: ${comp.quantity}, necessário: ${needed}.`
+        );
+      }
+
+      const newQty = comp.quantity - needed;
+      const critical = newQty <= comp.minQuantity;
+
+      stockUpdates.push({
+        ref: compSnap.ref,
+        patch: {
+          quantity: newQty,
+          critical,
+          updatedAt: serverTimestamp(),
+        },
+      });
+
+      const movementRef = doc(movementsCol);
+      movementRecords.push({
+        ref: movementRef,
+        data: {
+          componentId: item.componentId,
+          componentTypeName: comp.componentTypeName || item.componentTypeName || "Componente",
+          componentInternalCode: comp.internalCode || item.internalCode || null,
+          type: "SAIDA",
+          reason: `Retirada de Kit: ${kit.name}`,
+          quantity: needed,
+          notes: notes || `Retirada via Kit (${user.name})`,
+          userId: user.uid,
+          userName: user.name,
+          occurredAt: serverTimestamp(),
+        },
+      });
+    }
+
+    // 2. Atualizar componentes e criar movimentações de estoque
+    for (const update of stockUpdates) {
+      tx.update(update.ref, update.patch);
+    }
+
+    for (const mov of movementRecords) {
+      tx.set(mov.ref, mov.data);
+    }
+
+    const parsedDate = parseDateInput(expectedReturnAt);
+    const expectedReturnTimestamp = parsedDate ? Timestamp.fromDate(parsedDate) : null;
+
+    // 3. Criar empréstimo do kit
+    const kitLoanData = {
+      kitId,
+      kitName: kit.name,
+      targetClass: kit.targetClass || "",
+      userId: user.uid,
+      userName: user.name,
+      userEmail: user.email || "",
+      items: kit.items,
+      borrowedAt: serverTimestamp(),
+      expectedReturnAt: expectedReturnTimestamp,
+      returnedAt: null,
+      status: "ATIVO",
+      notes: notes || "",
+    };
+
+    tx.set(loanRef, kitLoanData);
+  });
+
+  return loanRef.id;
+}
+
+/**
+ * Devolve um kit com 1-Clique.
+ * Executa uma transação atômica que repõe os estoques dos componentes do kit
+ * e registra as entradas no histórico de movimentações.
+ */
+export async function returnKitLoan(loanId) {
+  const loanRef = doc(db, "kitLoans", loanId);
+
+  await runTransaction(db, async (tx) => {
+    const loanSnap = await tx.get(loanRef);
+    if (!loanSnap.exists()) throw new Error("Empréstimo de kit não encontrado.");
+
+    const loan = loanSnap.data();
+    if (loan.status === "DEVOLVIDO" || loan.returnedAt) {
+      throw new Error("Este empréstimo de kit já foi devolvido anteriormente.");
+    }
+
+    if (!loan.items || loan.items.length === 0) {
+      throw new Error("Empréstimo sem itens registrados para devolução.");
+    }
+
+    // 1. Ler todos os componentes para atualizar a quantidade
+    const componentSnaps = await Promise.all(
+      loan.items.map((item) => tx.get(doc(db, "components", item.componentId)))
+    );
+
+    const stockUpdates = [];
+    const movementRecords = [];
+
+    for (let i = 0; i < loan.items.length; i++) {
+      const item = loan.items[i];
+      const compSnap = componentSnaps[i];
+
+      if (compSnap.exists()) {
+        const comp = compSnap.data();
+        const returnQty = Number(item.quantity || 1);
+        const newQty = comp.quantity + returnQty;
+        const critical = newQty <= comp.minQuantity;
+
+        stockUpdates.push({
+          ref: compSnap.ref,
+          patch: {
+            quantity: newQty,
+            critical,
+            updatedAt: serverTimestamp(),
+          },
+        });
+
+        const movementRef = doc(movementsCol);
+        movementRecords.push({
+          ref: movementRef,
+          data: {
+            componentId: item.componentId,
+            componentTypeName: comp.componentTypeName || item.componentTypeName || "Componente",
+            componentInternalCode: comp.internalCode || item.internalCode || null,
+            type: "ENTRADA",
+            reason: `Devolução de Kit: ${loan.kitName}`,
+            quantity: returnQty,
+            notes: `Devolução via Kit (${loan.userName})`,
+            userId: loan.userId,
+            userName: loan.userName,
+            occurredAt: serverTimestamp(),
+          },
+        });
+      }
+    }
+
+    // 2. Executar atualizações no Firestore
+    for (const update of stockUpdates) {
+      tx.update(update.ref, update.patch);
+    }
+
+    for (const mov of movementRecords) {
+      tx.set(mov.ref, mov.data);
+    }
+
+    // 3. Atualizar status do empréstimo do kit para DEVOLVIDO
+    tx.update(loanRef, {
+      status: "DEVOLVIDO",
+      returnedAt: serverTimestamp(),
+    });
+  });
+}
+
+export async function listActiveKitLoans() {
+  const snap = await getDocs(query(kitLoansCol, where("status", "==", "ATIVO")));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function listAllKitLoans(max = 100) {
+  const snap = await getDocs(query(kitLoansCol, orderBy("borrowedAt", "desc"), fsLimit(max)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function getMyActiveKitLoans(userId) {
+  if (!userId) return [];
+  const snap = await getDocs(
+    query(kitLoansCol, where("userId", "==", userId), where("status", "==", "ATIVO"))
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
 /* ============================== USUÁRIOS ============================== */
 
 const usersCol = collection(db, "users");
@@ -810,13 +1068,34 @@ export async function listCriticalComponents(max = 8) {
  */
 export async function getMyActiveLoans(userId) {
   if (!userId) return [];
-  const [tools, microcontrollers] = await Promise.all([
+  const [tools, microcontrollers, kitLoans] = await Promise.all([
     listTools({ status: "EMPRESTADA" }),
     listMicrocontrollers({ status: "EMPRESTADA" }),
+    getMyActiveKitLoans(userId),
   ]);
 
   const now = new Date();
   const myItems = [];
+
+  for (const k of kitLoans) {
+    const expDate = k.expectedReturnAt?.toDate
+      ? k.expectedReturnAt.toDate()
+      : (k.expectedReturnAt ? new Date(k.expectedReturnAt) : null);
+    const isOverdue = !!(expDate && expDate < now);
+    const componentCount = k.items ? k.items.reduce((acc, i) => acc + Number(i.quantity || 1), 0) : 0;
+    myItems.push({
+      id: k.kitId || k.id,
+      loanId: k.id,
+      type: "KIT",
+      typeLabel: "Kit de Aula",
+      name: k.kitName,
+      details: `${componentCount} componente(s) ${k.targetClass ? `(${k.targetClass})` : ""}`,
+      icon: "bi-box-seam-fill",
+      borrowedAt: k.borrowedAt,
+      expectedReturnAt: expDate,
+      isOverdue,
+    });
+  }
 
   for (const t of tools) {
     if (t.currentLoan && t.currentLoan.userId === userId) {
