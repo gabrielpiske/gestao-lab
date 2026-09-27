@@ -67,6 +67,12 @@ const borrowKitNotes = document.getElementById("borrow-kit-notes");
 const borrowKitError = document.getElementById("borrow-kit-error");
 const confirmBorrowBtn = document.getElementById("confirm-borrow-btn");
 
+// Estado local
+let allKits = [];
+let allComponents = [];
+let draftKitItems = []; // [{ componentId, componentTypeName, internalCode, quantity }]
+let selectedKitForBorrow = null;
+
 function getKitModal() {
   if (kitModalEl && window.bootstrap?.Modal) {
     return bootstrap.Modal.getOrCreateInstance(kitModalEl);
